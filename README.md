@@ -22,6 +22,24 @@ Man kan også bygge med maven:
 mvn package
 ```
 
+### Testing
+
+HOI kan startes med:
+
+```
+docker run \
+    -e KAFKA_BOOTSTRAP_SERVERS=broker:9092 \
+    -e SCHEMA_REGISTRY_URL=http://schema_registry:8081 \
+    -e KAFKA_SASL_JAAS_CONFIG= \
+    -e KAFKA_SASL_MECHANISM= \
+    -e KAFKA_SECURITY_PROTOCOL= \
+    -e SKATT_API_URL=http://testapi:8080/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/ \
+    --network=tortuga_default \
+    repo.adeo.no:5443/tortuga-hoi
+```
+
+Dette forutsetter at du har startet et Kafka testkluster via docker-compose fra https://github.com/navikt/tortuga-hiv. 
+Navnet som angis til `--network` kan variere og du bør sjekke opp i dette og evt. endre i kommandoen ovenfor.
 ---
 
 # Henvendelser

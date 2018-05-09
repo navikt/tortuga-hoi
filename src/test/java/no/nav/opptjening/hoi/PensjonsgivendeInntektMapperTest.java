@@ -1,5 +1,6 @@
-package no.nav.opptjening.hoi.hendelser;
+package no.nav.opptjening.hoi;
 
+import no.nav.opptjening.hoi.PensjonsgivendeInntektMapper;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.skatt.schema.BeregnetSkatt;
 import org.junit.Assert;

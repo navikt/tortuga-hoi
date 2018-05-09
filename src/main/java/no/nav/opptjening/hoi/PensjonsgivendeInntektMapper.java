@@ -1,4 +1,4 @@
-package no.nav.opptjening.hoi.hendelser;
+package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.schema.Fastlandsinntekt;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
