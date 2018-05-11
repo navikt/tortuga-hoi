@@ -3,18 +3,14 @@ package no.nav.opptjening.hoi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class ApplicationRunner {
-
     private static final int GRACEFUL_TERMINATION_TIMEOUT = 10000;
 
     private static final Logger LOG = LoggerFactory.getLogger(ApplicationRunner.class);
 
-    private final ExecutorService executorService;
+    private final ThreadPoolExecutor executorService;
     /**
      * a task that should run forever, or as long as the application should run
      */
@@ -28,8 +24,7 @@ public class ApplicationRunner {
     public ApplicationRunner(Runnable main, Runnable... tasks) {
         this.main = main;
         this.tasks = tasks;
-        this.executorService = Executors.newFixedThreadPool(1 + tasks.length);
-
+        this.executorService = new DefaultFixedThreadPoolExecutor(1 + tasks.length);
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
     }
 
@@ -66,6 +61,14 @@ public class ApplicationRunner {
         System.exit(!shutdownOk ? 1 : 0);
     }
 
+    private Future<?> scheduleTasks() {
+        Future<?> future = executorService.submit(main);
+        for (Runnable r : tasks) {
+            executorService.execute(r);
+        }
+        return future;
+    }
+
     private boolean runTasksAndWait() {
         Future<?> mainTask = scheduleTasks();
 
@@ -77,11 +80,47 @@ public class ApplicationRunner {
         return !mainTask.isDone();
     }
 
-    private Future<?> scheduleTasks() {
-        Future<?> future = executorService.submit(main);
-        for (Runnable r : tasks) {
-            executorService.submit(r);
+    private static class DefaultFixedThreadPoolExecutor extends ThreadPoolExecutor {
+
+        private static final Logger LOG = LoggerFactory.getLogger(DefaultFixedThreadPoolExecutor.class);
+
+        public DefaultFixedThreadPoolExecutor(int poolSize) {
+            super(poolSize, poolSize, 0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>());
         }
-        return future;
+
+        @Override
+        protected void beforeExecute(Thread t, Runnable r) {
+            super.beforeExecute(t, r);
+        }
+
+        @Override
+        protected void afterExecute(Runnable r, Throwable t) {
+            super.afterExecute(r, t);
+
+            if (t == null && r instanceof Future<?>) {
+                try {
+                    ((Future<?>) r).get();
+                } catch (CancellationException ce) {
+                    t = ce;
+                } catch (ExecutionException ee) {
+                    t = ee.getCause();
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt(); // ignore/reset
+                }
+            }
+
+            if (t != null) {
+                LOG.error("Uncaught exception in runnable {}", r, t);
+            } else {
+                LOG.debug("Runnable ({}) exited", r);
+            }
+        }
+
+        @Override
+        protected void terminated() {
+            super.terminated();
+            LOG.debug("Thread pool executor terminated");
+        }
     }
 }
