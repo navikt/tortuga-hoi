@@ -1,5 +1,7 @@
 package no.nav.opptjening.hoi;
 
+import no.nav.opptjening.nais.ApplicationRunner;
+import no.nav.opptjening.nais.NaisHttpServer;
 import no.nav.opptjening.skatt.api.beregnetskatt.BeregnetSkattClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
