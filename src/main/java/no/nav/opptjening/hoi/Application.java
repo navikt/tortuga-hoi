@@ -1,8 +1,6 @@
 package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.skatt.api.beregnetskatt.BeregnetSkattClient;
-import no.nav.opptjening.skatt.schema.hendelsesliste.Hendelse;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +24,15 @@ public class Application {
             BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(
                     env.getOrDefault("SKATT_API_URL", "http://tortuga-testapi/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/"));
 
+            SkatteoppgjorhendelseConsumer skatteoppgjorhendelseConsumer = new SkatteoppgjorhendelseConsumer(kafkaConfiguration.hendelseConsumer(), beregnetSkattClient);
             PensjonsgivendeInntektKafkaProducer inntektProducer = new PensjonsgivendeInntektKafkaProducer(kafkaConfiguration.inntektsProducer());
-            Consumer<String, Hendelse> hendelseConsumer = kafkaConfiguration.hendelseConsumer();
 
-            BeregnetSkattHendelseConsumer consumer = new BeregnetSkattHendelseConsumer(beregnetSkattClient, inntektProducer, hendelseConsumer);
+            PensjonsgivendeInntektTask consumer = new PensjonsgivendeInntektTask(skatteoppgjorhendelseConsumer, inntektProducer);
 
             appRunner = new ApplicationRunner(consumer, naisHttpServer);
 
+            appRunner.addShutdownListener(skatteoppgjorhendelseConsumer::shutdown);
+            appRunner.addShutdownListener(inntektProducer::shutdown);
         } catch (Exception e) {
             LOG.error("Application failed to start", e);
             return;

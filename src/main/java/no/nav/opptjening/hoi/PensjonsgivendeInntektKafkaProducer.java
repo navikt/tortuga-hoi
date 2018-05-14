@@ -36,7 +36,7 @@ public class PensjonsgivendeInntektKafkaProducer {
         producedCount.inc(beregnetSkattList.size());
     }
 
-    public void close() {
+    public void shutdown() {
         producer.close();
     }
 }
