@@ -14,10 +14,16 @@ prometheus:
   enabled: true
 fasitResources:
   used:
-    - alias: eksternapp.skatt.datasamarbeid.api.pensjonsgivendeinntekt
+    - alias: eksternapp.skatt.datasamarbeid.api.beregnetskatt
       resourceType: restservice
+      propertyMap:
+        url: SKATT_API_URL
     - alias: srvtortuga-hoi
       resourceType: credential
       propertyMap:
         username: KAFKA_USERNAME
         password: KAFKA_PASSWORD
+    - alias: tortuga-hoi-eksternapp.skatt.datasamarbeid.api.beregnetskatt-apiKey
+      resourceType: credential
+      propertyMap:
+        password: SKATT_API_KEY

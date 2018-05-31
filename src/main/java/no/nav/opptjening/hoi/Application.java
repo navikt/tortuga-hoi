@@ -24,7 +24,8 @@ public class Application {
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
 
             BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(
-                    env.getOrDefault("SKATT_API_URL", "http://tortuga-testapi/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/"));
+                    env.getOrDefault("SKATT_API_URL", "https://api-gw-q0.oera.no/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/"),
+                    env.get("SKATT_API_KEY"));
 
             SkatteoppgjorhendelseConsumer skatteoppgjorhendelseConsumer = new SkatteoppgjorhendelseConsumer(kafkaConfiguration.hendelseConsumer(), beregnetSkattClient);
             PensjonsgivendeInntektKafkaProducer inntektProducer = new PensjonsgivendeInntektKafkaProducer(kafkaConfiguration.inntektsProducer());
