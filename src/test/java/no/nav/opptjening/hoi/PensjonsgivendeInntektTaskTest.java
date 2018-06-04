@@ -24,7 +24,7 @@ public class PensjonsgivendeInntektTaskTest {
     private PensjonsgivendeInntektKafkaProducer inntektProducer;
 
     @Mock
-    HttpException httpException;
+    private HttpException httpException;
 
     @Before
     public void setUp() {
