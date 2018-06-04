@@ -5,6 +5,7 @@ import no.nav.opptjening.skatt.schema.BeregnetSkatt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 public class PensjonsgivendeInntektTask implements Runnable {
@@ -19,21 +20,24 @@ public class PensjonsgivendeInntektTask implements Runnable {
         this.inntektProducer = inntektProducer;
     }
 
+    public boolean currentThreadIsInterrupted() {
+        return Thread.currentThread().isInterrupted();
+    }
+
     public void run() {
         try {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!currentThreadIsInterrupted()) {
                 List<BeregnetSkatt> beregnetSkattList = hendelseConsumer.poll();
-
                 inntektProducer.send(beregnetSkattList);
-
                 hendelseConsumer.commit();
             }
         } catch (HttpException e) {
             LOG.error("Error while contacting Skatteetaten", e);
+        } catch (IOException e) {
+            LOG.error("Error during hendelseConsumer.poll()", e);
         } catch (Exception e) {
             LOG.error("Error during processing of Hendelse/Inntekt", e);
         }
-
         LOG.info("PensjonsgivendeInntektTask task stopped");
     }
 }
