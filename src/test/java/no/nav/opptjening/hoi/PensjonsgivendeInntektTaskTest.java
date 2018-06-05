@@ -39,7 +39,6 @@ public class PensjonsgivendeInntektTaskTest {
     @Test
     public void runOk() throws Exception {
         Answer answer = invocationOnMock -> {
-            System.out.println("Hei");
             testRunThread.interrupt();
             return null;
         };
