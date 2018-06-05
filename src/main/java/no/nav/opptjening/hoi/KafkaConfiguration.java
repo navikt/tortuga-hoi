@@ -5,7 +5,7 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
-import no.nav.opptjening.skatt.schema.hendelsesliste.Hendelse;
+import no.nav.opptjening.skatt.schema.hendelsesliste.Hendelsesliste;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -123,7 +123,7 @@ public class KafkaConfiguration {
         return new KafkaProducer<>(configs);
     }
 
-    public Consumer<String, Hendelse> hendelseConsumer() {
+    public Consumer<String, Hendelsesliste.Hendelse> hendelseConsumer() {
         Map<String, Object> configs = getCommonConfigs();
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
