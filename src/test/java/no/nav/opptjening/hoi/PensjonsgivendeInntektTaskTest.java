@@ -1,15 +1,18 @@
 package no.nav.opptjening.hoi;
 
+import no.nav.opptjening.skatt.schema.BeregnetSkatt;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import static org.mockito.Mockito.*;
+
 import java.io.IOException;
+import java.util.Collections;
 
 import no.nav.opptjening.skatt.exceptions.HttpException;
+import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PensjonsgivendeInntektTaskTest {
@@ -26,35 +29,37 @@ public class PensjonsgivendeInntektTaskTest {
     @Mock
     private HttpException httpException;
 
+    private Thread testRunThread;
+
     @Before
     public void setUp() {
-        pensjonsgivendeInntektTask = Mockito.spy(pensjonsgivendeInntektTask);
+        testRunThread = new Thread(pensjonsgivendeInntektTask);
     }
-
 
     @Test
     public void runOk() throws Exception {
-        when(pensjonsgivendeInntektTask.currentThreadIsInterrupted())
-                .thenReturn(false)
-                .thenReturn(true);
+        Answer answer = invocationOnMock -> {
+            System.out.println("Hei");
+            testRunThread.interrupt();
+            return null;
+        };
 
-        pensjonsgivendeInntektTask.run();
+        when(hendelseConsumer.poll()).thenReturn(Collections.emptyList()).thenAnswer(answer);
 
-        verify(hendelseConsumer).poll();
-        verify(inntektProducer).send(anyList());
-        verify(hendelseConsumer).commit();
+        testRunThread.start();
+
+        verify(hendelseConsumer, times(2)).poll();
+        verify(inntektProducer, times(2)).send(anyList());
+        verify(hendelseConsumer, times(2)).commit();
+
+        testRunThread.join(1000);
     }
+
 
     @Test
     public void runThrowsIOExceptionWhenSendIsCalled() throws Exception {
-        doThrow(IOException.class).when(hendelseConsumer).poll();
-
-        when(pensjonsgivendeInntektTask.currentThreadIsInterrupted())
-                .thenReturn(false)
-                .thenReturn(true);
-
-        pensjonsgivendeInntektTask.run();
-
+        doThrow(new IOException()).when(hendelseConsumer).poll();
+        testRunThread.run();
         verify(hendelseConsumer).poll();
         verify(inntektProducer, times(0)).send(anyList());
         verify(hendelseConsumer, times(0)).commit();
@@ -63,15 +68,10 @@ public class PensjonsgivendeInntektTaskTest {
     @Test
     public void runThrowsHttpExceptionWhenPollIsCalled() throws Exception {
         doThrow(httpException).when(hendelseConsumer).poll();
-
-        when(pensjonsgivendeInntektTask.currentThreadIsInterrupted())
-                .thenReturn(false)
-                .thenReturn(true);
-
-        pensjonsgivendeInntektTask.run();
-
+        testRunThread.run();
         verify(hendelseConsumer).poll();
         verify(inntektProducer, times(0)).send(anyList());
         verify(hendelseConsumer, times(0)).commit();
     }
+
 }
