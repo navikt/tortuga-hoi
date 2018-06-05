@@ -20,13 +20,9 @@ public class PensjonsgivendeInntektTask implements Runnable {
         this.inntektProducer = inntektProducer;
     }
 
-    public boolean currentThreadIsInterrupted() {
-        return Thread.currentThread().isInterrupted();
-    }
-
     public void run() {
         try {
-            while (!currentThreadIsInterrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 List<BeregnetSkatt> beregnetSkattList = hendelseConsumer.poll();
                 inntektProducer.send(beregnetSkattList);
                 hendelseConsumer.commit();
