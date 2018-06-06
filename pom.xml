@@ -118,12 +118,6 @@
             <version>2.18.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>no.nav.common</groupId>
-            <artifactId>embedded.kafka</artifactId>
-            <version>0.6.3</version>
-            <scope>test</scope>
-        </dependency>
 
     </dependencies>
 
