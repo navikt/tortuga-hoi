@@ -2,6 +2,7 @@ package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.exceptions.HttpException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,8 @@ public class PensjonsgivendeInntektTask implements Runnable {
     private final SkatteoppgjorhendelseConsumer hendelseConsumer;
     private final PensjonsgivendeInntektKafkaProducer inntektProducer;
 
-    public PensjonsgivendeInntektTask(SkatteoppgjorhendelseConsumer hendelseConsumer, PensjonsgivendeInntektKafkaProducer inntektProducer) {
+    public PensjonsgivendeInntektTask(@NotNull SkatteoppgjorhendelseConsumer hendelseConsumer,
+                                      @NotNull PensjonsgivendeInntektKafkaProducer inntektProducer) {
         this.hendelseConsumer = hendelseConsumer;
         this.inntektProducer = inntektProducer;
     }

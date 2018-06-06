@@ -12,6 +12,7 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.TopicPartition;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ public class SkatteoppgjorhendelseConsumer {
     private final Consumer<String, Hendelse> hendelseConsumer;
     private final BeregnetSkattClient beregnetSkattClient;
 
-    public SkatteoppgjorhendelseConsumer(Consumer<String, Hendelse> hendelseConsumer, BeregnetSkattClient beregnetSkattClient) {
+    public SkatteoppgjorhendelseConsumer(@NotNull Consumer<String, Hendelse> hendelseConsumer, @NotNull BeregnetSkattClient beregnetSkattClient) {
         this.hendelseConsumer = hendelseConsumer;
         this.beregnetSkattClient = beregnetSkattClient;
 
@@ -63,6 +64,7 @@ public class SkatteoppgjorhendelseConsumer {
         });
     }
 
+    @NotNull
     public List<BeregnetSkatt> poll() throws IOException {
         ConsumerRecords<String, Hendelse> hendelser = hendelseConsumer.poll(500);
 

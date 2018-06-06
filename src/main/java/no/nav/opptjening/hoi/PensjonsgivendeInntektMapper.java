@@ -4,11 +4,12 @@ import no.nav.opptjening.schema.Fastlandsinntekt;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.schema.Svalbardinntekt;
 import no.nav.opptjening.schema.skatt.BeregnetSkatt;
+import org.jetbrains.annotations.NotNull;
 
 
 public class PensjonsgivendeInntektMapper {
-
-    public PensjonsgivendeInntekt toPensjonsgivendeInntekt(BeregnetSkatt beregnetSkatt) {
+    @NotNull
+    public PensjonsgivendeInntekt toPensjonsgivendeInntekt(@NotNull BeregnetSkatt beregnetSkatt) {
         return PensjonsgivendeInntekt.newBuilder()
                 .setPersonidentifikator(beregnetSkatt.getPersonidentifikator())
                 .setInntektsaar(beregnetSkatt.getInntektsaar())

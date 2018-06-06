@@ -1,10 +1,11 @@
 package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.schema.skatt.BeregnetSkatt;
+import org.jetbrains.annotations.NotNull;
 
 public class BeregnetSkattMapper {
-    public BeregnetSkatt mapToBeregnetSkatt(no.nav.opptjening.skatt.client.BeregnetSkatt beregnetSkatt) {
-
+    @NotNull
+    public BeregnetSkatt mapToBeregnetSkatt(@NotNull no.nav.opptjening.skatt.client.BeregnetSkatt beregnetSkatt) {
         return BeregnetSkatt.newBuilder()
                 .setPersonidentifikator(beregnetSkatt.getPersonidentifikator())
                 .setInntektsaar(beregnetSkatt.getInntektsaar())
