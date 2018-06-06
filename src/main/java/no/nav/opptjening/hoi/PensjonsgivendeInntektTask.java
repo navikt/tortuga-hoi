@@ -1,7 +1,7 @@
 package no.nav.opptjening.hoi;
 
-import no.nav.opptjening.skatt.exceptions.HttpException;
-import no.nav.opptjening.skatt.schema.BeregnetSkatt;
+import no.nav.opptjening.skatt.client.BeregnetSkatt;
+import no.nav.opptjening.skatt.client.exceptions.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

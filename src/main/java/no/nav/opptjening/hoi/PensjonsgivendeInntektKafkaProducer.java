@@ -2,7 +2,8 @@ package no.nav.opptjening.hoi;
 
 import io.prometheus.client.Counter;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
-import no.nav.opptjening.skatt.schema.BeregnetSkatt;
+
+import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ public class PensjonsgivendeInntektKafkaProducer {
     private static final Counter producedCount = Counter.build()
             .name("pensjonsgivende_inntekter_produced")
             .help("Antall inntekter bekreftet sendt til Kafka.").register();
+    private final BeregnetSkattMapper beregnetSkattMapper = new BeregnetSkattMapper();
 
     public PensjonsgivendeInntektKafkaProducer(Producer<String, PensjonsgivendeInntekt> producer) {
         this.producer = producer;
@@ -28,7 +30,7 @@ public class PensjonsgivendeInntektKafkaProducer {
 
     public void send(List<BeregnetSkatt> beregnetSkattList) {
         for (BeregnetSkatt beregnetSkatt : beregnetSkattList) {
-            PensjonsgivendeInntekt pensjonsgivendeInntekt = pensjonsgivendeInntektMapper.toPensjonsgivendeInntekt(beregnetSkatt);
+            PensjonsgivendeInntekt pensjonsgivendeInntekt = pensjonsgivendeInntektMapper.toPensjonsgivendeInntekt(beregnetSkattMapper.mapToBeregnetSkatt(beregnetSkatt));
             LOG.info("Mapper beregnet skatt='{}' til pensjonsgivende inntekt='{}'", beregnetSkatt, pensjonsgivendeInntekt);
             producer.send(new ProducerRecord<>(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC, pensjonsgivendeInntekt));
         }
