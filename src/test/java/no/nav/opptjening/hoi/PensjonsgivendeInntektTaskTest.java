@@ -1,6 +1,7 @@
 package no.nav.opptjening.hoi;
 
-import no.nav.opptjening.skatt.schema.BeregnetSkatt;
+import no.nav.opptjening.skatt.client.exceptions.HttpException;
+
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -11,7 +12,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.Collections;
 
-import no.nav.opptjening.skatt.exceptions.HttpException;
+
 import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -40,7 +41,7 @@ public class PensjonsgivendeInntektTaskTest {
     public void runOk() throws Exception {
         Answer answer = invocationOnMock -> {
             testRunThread.interrupt();
-            return null;
+            return Collections.emptyList();
         };
 
         when(hendelseConsumer.poll()).thenReturn(Collections.emptyList()).thenAnswer(answer);
