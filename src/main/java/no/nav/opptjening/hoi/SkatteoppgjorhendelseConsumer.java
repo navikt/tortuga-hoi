@@ -2,11 +2,13 @@ package no.nav.opptjening.hoi;
 
 import io.prometheus.client.Counter;
 
-import no.nav.opptjening.skatt.api.beregnetskatt.BeregnetSkattClient;
-import no.nav.opptjening.skatt.schema.BeregnetSkatt;
-import no.nav.opptjening.skatt.schema.hendelsesliste.Hendelsesliste;
+import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.skatt.client.BeregnetSkatt;
+import no.nav.opptjening.skatt.client.Hendelsesliste;
+import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.TopicPartition;
@@ -32,10 +34,10 @@ public class SkatteoppgjorhendelseConsumer {
             .name("beregnet_skatt_hendelser_processed")
             .help("Antall hendelser prosessert").register();
 
-    private final Consumer<String, Hendelsesliste.Hendelse> hendelseConsumer;
+    private final Consumer<String, Hendelse> hendelseConsumer;
     private final BeregnetSkattClient beregnetSkattClient;
 
-    public SkatteoppgjorhendelseConsumer(Consumer<String, Hendelsesliste.Hendelse> hendelseConsumer, BeregnetSkattClient beregnetSkattClient) {
+    public SkatteoppgjorhendelseConsumer(Consumer<String, Hendelse> hendelseConsumer, BeregnetSkattClient beregnetSkattClient) {
         this.hendelseConsumer = hendelseConsumer;
         this.beregnetSkattClient = beregnetSkattClient;
 
@@ -62,12 +64,12 @@ public class SkatteoppgjorhendelseConsumer {
     }
 
     public List<BeregnetSkatt> poll() throws IOException {
-        ConsumerRecords<String, Hendelsesliste.Hendelse> hendelser = hendelseConsumer.poll(500);
+        ConsumerRecords<String, Hendelse> hendelser = hendelseConsumer.poll(500);
 
         List<BeregnetSkatt> beregnetSkattList = new ArrayList<>();
-        for (ConsumerRecord<String, Hendelsesliste.Hendelse> record : hendelser) {
+        for (ConsumerRecord<String, Hendelse> record : hendelser) {
             antallHendelserRecieved.inc();
-            Hendelsesliste.Hendelse hendelse = record.value();
+            Hendelse hendelse = record.value();
 
             LOG.info("HOI haandterer hendelse={}", hendelse);
 
