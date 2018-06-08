@@ -1,27 +1,18 @@
 package no.nav.opptjening.hoi;
 
-import no.nav.opptjening.hoi.PensjonsgivendeInntektMapper;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
-
-import no.nav.opptjening.schema.skatt.BeregnetSkatt;
+import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class PensjonsgivendeInntektMapperTest {
+
     @Test
     public void toPensjonsgivendeInntekt() throws Exception {
-        BeregnetSkatt beregnetSkatt = BeregnetSkatt.newBuilder()
-                .setPersonidentifikator("12345678911")
-                .setInntektsaar("2018")
-                .setPersoninntektLoenn(5678)
-                .setPersoninntektFiskeFangstFamiliebarnehage(7890)
-                .setPersoninntektNaering(8901)
-                .setPersoninntektBarePensjonsdel(9012)
-                .setSvalbardLoennLoennstrekkordningen(89012)
-                .setSvalbardPersoninntektNaering(123456)
-                .build();
+        BeregnetSkatt beregnetSkatt = new BeregnetSkatt("12345678911", "2018", 5678, 7890,
+                8901, 9012, 89012, 123456, false);
 
-        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().toPensjonsgivendeInntekt(beregnetSkatt);
+        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(beregnetSkatt);
 
         Assert.assertEquals(beregnetSkatt.getPersonidentifikator(), pensjonsgivendeInntekt.getPersonidentifikator());
         Assert.assertEquals(beregnetSkatt.getInntektsaar(), pensjonsgivendeInntekt.getInntektsaar());

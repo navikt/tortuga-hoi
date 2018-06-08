@@ -1,41 +1,53 @@
 package no.nav.opptjening.hoi;
 
-import no.nav.opptjening.skatt.client.BeregnetSkatt;
-import no.nav.opptjening.skatt.client.exceptions.HttpException;
+import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.KStream;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.List;
+import java.util.Properties;
 
 public class PensjonsgivendeInntektTask implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(PensjonsgivendeInntektTask.class);
 
-    private final SkatteoppgjorhendelseConsumer hendelseConsumer;
-    private final PensjonsgivendeInntektKafkaProducer inntektProducer;
+    private final BeregnetSkattClient beregnetSkattClient;
+    private final Properties props;
+    private final KafkaStreams streams;
 
-    public PensjonsgivendeInntektTask(@NotNull SkatteoppgjorhendelseConsumer hendelseConsumer,
-                                      @NotNull PensjonsgivendeInntektKafkaProducer inntektProducer) {
-        this.hendelseConsumer = hendelseConsumer;
-        this.inntektProducer = inntektProducer;
+    public PensjonsgivendeInntektTask(@NotNull BeregnetSkattClient beregnetSkattClient, @NotNull Properties props) {
+        this.beregnetSkattClient = beregnetSkattClient;
+        this.props = props;
+
+        StreamsBuilder builder = new StreamsBuilder();
+        KStream<String, Hendelse> stream = builder.stream(KafkaConfiguration.BEREGNET_SKATT_HENDELSE_TOPIC);
+        stream.filter(new HendelseFilter())
+                .transformValues(() -> new BeregnetSkattMapper(beregnetSkattClient))
+                .mapValues(new PensjonsgivendeInntektMapper())
+                .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
+
+        streams = new KafkaStreams(builder.build(), props);
+        streams.setUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception in thread {}", t, e));
     }
 
     public void run() {
+        streams.start();
+
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                List<BeregnetSkatt> beregnetSkattList = hendelseConsumer.poll();
-                inntektProducer.send(beregnetSkattList);
-                hendelseConsumer.commit();
+                Thread.sleep(10000);
             }
-        } catch (HttpException e) {
-            LOG.error("Error while contacting Skatteetaten", e);
-        } catch (IOException e) {
-            LOG.error("Error during hendelseConsumer.poll()", e);
-        } catch (Exception e) {
-            LOG.error("Error during processing of Hendelse/Inntekt", e);
+        } catch (InterruptedException e) {
+            LOG.info("PensjonsgivendeInntektTask interrupted during sleep, exiting");
         }
-        LOG.info("PensjonsgivendeInntektTask task stopped");
+        LOG.info("PensjonsgivendeInntektTask stopped");
+    }
+
+    public void shutdown() {
+        streams.close();
     }
 }

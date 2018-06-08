@@ -13,7 +13,6 @@ public class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
 
     public static void main(String [] args) {
-
         Map<String, String> env = System.getenv();
 
         ApplicationRunner appRunner;
@@ -23,19 +22,15 @@ public class Application {
             NaisHttpServer naisHttpServer = new NaisHttpServer();
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
 
-            BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(
+            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(
                     env.getOrDefault("SKATT_API_URL", "https://api-gw-q0.adeo.no/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/"),
                     env.get("SKATT_API_KEY"));
 
-            SkatteoppgjorhendelseConsumer skatteoppgjorhendelseConsumer = new SkatteoppgjorhendelseConsumer(kafkaConfiguration.hendelseConsumer(), beregnetSkattClient);
-            PensjonsgivendeInntektKafkaProducer inntektProducer = new PensjonsgivendeInntektKafkaProducer(kafkaConfiguration.inntektsProducer());
-
-            PensjonsgivendeInntektTask consumer = new PensjonsgivendeInntektTask(skatteoppgjorhendelseConsumer, inntektProducer);
+            PensjonsgivendeInntektTask consumer = new PensjonsgivendeInntektTask(beregnetSkattClient, kafkaConfiguration.streamsConfiguration());
 
             appRunner = new ApplicationRunner(consumer, naisHttpServer);
 
-            appRunner.addShutdownListener(skatteoppgjorhendelseConsumer::shutdown);
-            appRunner.addShutdownListener(inntektProducer::shutdown);
+            appRunner.addShutdownListener(consumer::shutdown);
         } catch (Exception e) {
             LOG.error("Application failed to start", e);
             return;
