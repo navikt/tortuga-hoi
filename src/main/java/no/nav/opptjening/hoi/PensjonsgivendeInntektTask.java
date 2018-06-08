@@ -38,7 +38,7 @@ public class PensjonsgivendeInntektTask implements Runnable {
         streams.start();
 
         try {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && streams.state().isRunning()) {
                 Thread.sleep(10000);
             }
         } catch (InterruptedException e) {
