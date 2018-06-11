@@ -29,15 +29,11 @@ public class BeregnetSkattMapperTest {
     @Test
     public void transformReturnsValidBeregnetskatt() throws Exception{
         createMockApi();
-
         BeregnetSkatt expectedBeregnetSkatt = new BeregnetSkatt("12345678911", "2018", 350371,
                 0, 0, 0,
                 0, 0, false);
-
         Hendelse hendelse = new Hendelse(0L, "12345678911", "2018");
-
         BeregnetSkatt transformedHendelse = beregnetSkattMapper.transform(hendelse);
-
         assertEquals(expectedBeregnetSkatt, transformedHendelse);
     }
 
