@@ -91,6 +91,7 @@ public class PensjonsgivendeInntektIT {
         hendelser.add(new Hendelse(10L, "04063100264", "2015"));
         hendelser.add(new Hendelse(11L, "04116500200", "2015"));
         hendelser.add(new Hendelse(12L, "04126200248", "2015"));
+        hendelser.add(new Hendelse(13L, "11987654321", "2017"));
 
         final String topic = "privat-tortuga-beregnetSkattHendelseHentet";
         for (Hendelse hendelse : hendelser) {
@@ -162,6 +163,14 @@ public class PensjonsgivendeInntektIT {
                         "  \"personinntektNaering\": 24600,\n" +
                         "  \"skjermet\": false,\n" +
                         "  \"skatteoppgjoersdato\": \"2018-06-06\"\n" +
+                        "}")));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2017/11987654321"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"))
+                .willReturn(WireMock.notFound().withBody("{\n" +
+                        "  \"kode\": \"BSA-006\",\n" +
+                        "  \"melding\": \"Fant ikke Beregnet Skatt for gitt inntektsår og identifikator\",\n" +
+                        "  \"korrelasjonsid\": \"13a865f5-28f9-47db-9abd-ab78977c79fe\"\n" +
                         "}")));
     }
 
