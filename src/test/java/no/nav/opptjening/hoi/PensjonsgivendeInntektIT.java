@@ -166,7 +166,7 @@ public class PensjonsgivendeInntektIT {
     }
 
     @Test
-    public void that_KafkaStreamProcessesCorrectRecordsAndProducesOnNewTopic() throws Exception {
+    public void kafkaStreamProcessesCorrectRecordsAndProducesOnNewTopic() throws Exception {
         final Properties config = (Properties)streamsConfiguration.clone();
 
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi-streams");
