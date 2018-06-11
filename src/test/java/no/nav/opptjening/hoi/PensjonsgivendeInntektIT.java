@@ -175,25 +175,23 @@ public class PensjonsgivendeInntektIT {
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         final BeregnetSkattClient client = new BeregnetSkattClient("http://localhost:" + wireMockRule.port() + "/", "foobar");
-        final PensjonsgivendeInntektTask app = new PensjonsgivendeInntektTask(client, config);
+        final Application app = new Application(config, client);
 
         createTestRecords();
         createMockApi();
 
         CountDownLatch expectedProducedRecordsCount = new CountDownLatch(6);
 
-        Thread t1 = new Thread(app);
-        Thread t2 = new Thread(() -> pensjonsgivendeInntektConsumerThread(expectedProducedRecordsCount));
+        Thread t1 = new Thread(() -> pensjonsgivendeInntektConsumerThread(expectedProducedRecordsCount));
 
         try {
+            app.start();
             t1.start();
-            t2.start();
 
             Assert.assertTrue(expectedProducedRecordsCount.await(20000L, TimeUnit.MILLISECONDS));
             Assert.assertEquals(0, expectedProducedRecordsCount.getCount());
         } finally {
             t1.interrupt();
-            t2.interrupt();
             app.shutdown();
         }
     }
