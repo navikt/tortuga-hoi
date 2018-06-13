@@ -14,6 +14,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -207,13 +208,17 @@ public class PensjonsgivendeInntektIT {
 
     private void pensjonsgivendeInntektConsumerThread(CountDownLatch latch) {
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
-        while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
-            ConsumerRecords<String, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
+        try {
+            while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
+                ConsumerRecords<String, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
 
-            for (ConsumerRecord<String, PensjonsgivendeInntekt> record : consumerRecords) {
-                LOG.info("Received record = {}", record);
-                latch.countDown();
+                for (ConsumerRecord<String, PensjonsgivendeInntekt> record : consumerRecords) {
+                    LOG.info("Received record = {}", record);
+                    latch.countDown();
+                }
             }
+        } catch (KafkaException e) {
+            LOG.error("Error while polling records", e);
         }
     }
 }
