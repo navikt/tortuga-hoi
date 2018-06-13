@@ -40,7 +40,7 @@ public class Application {
 
     public Application(Properties properties, BeregnetSkattClient beregnetSkattClient) {
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, Hendelse> stream = builder.stream(KafkaConfiguration.BEREGNET_SKATT_HENDELSE_TOPIC);
+        KStream<String, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
         stream.filter(new HendelseFilter())
                 .transformValues(() -> new BeregnetSkattMapper(beregnetSkattClient))
                 .mapValues(new PensjonsgivendeInntektMapper())

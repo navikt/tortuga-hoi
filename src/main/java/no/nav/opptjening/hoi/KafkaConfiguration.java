@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class KafkaConfiguration {
 
-    public static final String BEREGNET_SKATT_HENDELSE_TOPIC = "privat-tortuga-beregnetSkattHendelseHentet";
+    public static final String SKATTEOPPGJØRHENDELSE_TOPIC = "privat-tortuga-skatteoppgjorhendelse";
     public static final String PENSJONSGIVENDE_INNTEKT_TOPIC = "aapen-opptjening-pensjonsgivendeInntekt";
 
     public static class Properties {
