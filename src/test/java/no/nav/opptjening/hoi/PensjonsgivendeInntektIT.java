@@ -35,7 +35,7 @@ public class PensjonsgivendeInntektIT {
     public WireMockRule wireMockRule = new WireMockRule();
 
     private static final int NUMBER_OF_BROKERS = 3;
-    private static final List<String> TOPICS = Arrays.asList("privat-tortuga-beregnetSkattHendelseHentet", "aapen-opptjening-pensjonsgivendeInntekt");
+    private static final List<String> TOPICS = Arrays.asList("privat-tortuga-skatteoppgjorhendelse", "aapen-opptjening-pensjonsgivendeInntekt");
 
     private static KafkaEnvironment kafkaEnvironment;
     private final Properties streamsConfiguration = new Properties();
@@ -94,7 +94,7 @@ public class PensjonsgivendeInntektIT {
         hendelser.add(new Hendelse(12L, "04126200248", "2015"));
         hendelser.add(new Hendelse(13L, "11987654321", "2017"));
 
-        final String topic = "privat-tortuga-beregnetSkattHendelseHentet";
+        final String topic = "privat-tortuga-skatteoppgjorhendelse";
         for (Hendelse hendelse : hendelser) {
             producer.send(new ProducerRecord<>(topic, hendelse.getGjelderPeriode() + "-" + hendelse.getIdentifikator(), hendelse));
         }
