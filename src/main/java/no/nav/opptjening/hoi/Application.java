@@ -21,8 +21,8 @@ public class Application {
         Map<String, String> env = System.getenv();
 
         try {
-            NaisHttpServer naisHttpServer = new NaisHttpServer();
-            naisHttpServer.run();
+            final NaisHttpServer naisHttpServer = new NaisHttpServer();
+            naisHttpServer.start();
 
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
 
@@ -31,6 +31,18 @@ public class Application {
                     env.get("SKATT_API_KEY"));
 
             final Application app = new Application(kafkaConfiguration.streamsConfiguration(), beregnetSkattClient);
+
+            app.setStateListener((newState, oldState) -> {
+                if (oldState.equals(KafkaStreams.State.PENDING_SHUTDOWN) && newState.equals(KafkaStreams.State.NOT_RUNNING)) {
+                    LOG.warn("Stream shutdown, stopping nais http server");
+                    try {
+                        naisHttpServer.stop();
+                    } catch (Exception e) {
+                        LOG.error("Error while shutting down nais http server", e);
+                    }
+                }
+            });
+
             app.start();
         } catch (Exception e) {
             LOG.error("Application failed to start", e);
@@ -40,7 +52,7 @@ public class Application {
 
     public Application(Properties properties, BeregnetSkattClient beregnetSkattClient) {
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, Hendelse> stream = builder.stream(KafkaConfiguration.BEREGNET_SKATT_HENDELSE_TOPIC);
+        KStream<String, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
         stream.filter(HendelseFilter::testThatHendelseIsFromValidYear)
                 .transformValues(() -> new BeregnetSkattMapper(beregnetSkattClient))
                 .mapValues(new PensjonsgivendeInntektMapper())
@@ -50,6 +62,10 @@ public class Application {
         streams.setUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception in thread {}", t, e));
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    void setStateListener(KafkaStreams.StateListener listener) {
+        streams.setStateListener(listener);
     }
 
     public void start() {

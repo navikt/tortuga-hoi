@@ -14,6 +14,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -34,7 +35,7 @@ public class PensjonsgivendeInntektIT {
     public WireMockRule wireMockRule = new WireMockRule();
 
     private static final int NUMBER_OF_BROKERS = 3;
-    private static final List<String> TOPICS = Arrays.asList("privat-tortuga-beregnetSkattHendelseHentet", "aapen-opptjening-pensjonsgivendeInntekt");
+    private static final List<String> TOPICS = Arrays.asList("privat-tortuga-skatteoppgjorhendelse", "aapen-opptjening-pensjonsgivendeInntekt");
 
     private static KafkaEnvironment kafkaEnvironment;
     private final Properties streamsConfiguration = new Properties();
@@ -93,7 +94,7 @@ public class PensjonsgivendeInntektIT {
         hendelser.add(new Hendelse(12L, "04126200248", "2015"));
         hendelser.add(new Hendelse(13L, "11987654321", "2017"));
 
-        final String topic = "privat-tortuga-beregnetSkattHendelseHentet";
+        final String topic = "privat-tortuga-skatteoppgjorhendelse";
         for (Hendelse hendelse : hendelser) {
             producer.send(new ProducerRecord<>(topic, hendelse.getGjelderPeriode() + "-" + hendelse.getIdentifikator(), hendelse));
         }
@@ -207,13 +208,17 @@ public class PensjonsgivendeInntektIT {
 
     private void pensjonsgivendeInntektConsumerThread(CountDownLatch latch) {
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
-        while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
-            ConsumerRecords<String, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
+        try {
+            while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
+                ConsumerRecords<String, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
 
-            for (ConsumerRecord<String, PensjonsgivendeInntekt> record : consumerRecords) {
-                LOG.info("Received record = {}", record);
-                latch.countDown();
+                for (ConsumerRecord<String, PensjonsgivendeInntekt> record : consumerRecords) {
+                    LOG.info("Received record = {}", record);
+                    latch.countDown();
+                }
             }
+        } catch (KafkaException e) {
+            LOG.error("Error while polling records", e);
         }
     }
 }
