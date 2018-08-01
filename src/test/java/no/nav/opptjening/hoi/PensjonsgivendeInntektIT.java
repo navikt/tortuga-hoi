@@ -102,6 +102,7 @@ public class PensjonsgivendeInntektIT {
     }
 
     private void createMockApi() {
+
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2017/01029804032"))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"))
                 .willReturn(WireMock.okJson("{\n" +
