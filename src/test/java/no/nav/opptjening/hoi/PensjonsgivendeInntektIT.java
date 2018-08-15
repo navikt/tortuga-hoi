@@ -199,7 +199,7 @@ public class PensjonsgivendeInntektIT {
             app.start();
             t1.start();
 
-            Assert.assertTrue(expectedProducedRecordsCount.await(20000L, TimeUnit.MILLISECONDS));
+            Assert.assertTrue(expectedProducedRecordsCount.await(50000L, TimeUnit.MILLISECONDS));
             Assert.assertEquals(0, expectedProducedRecordsCount.getCount());
         } finally {
             t1.interrupt();
