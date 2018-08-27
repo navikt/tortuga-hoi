@@ -26,9 +26,10 @@ public class Application {
 
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
 
-            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(
-                    env.getOrDefault("SKATT_API_URL", "https://api-gw-q0.adeo.no/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/"),
-                    env.get("SKATT_API_KEY"));
+            String beregnetSkattUrl = env.get("SKATT_API_URL");
+            String skattApiKey = env.get("SKATT_API_KEY");
+
+            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(beregnetSkattUrl, skattApiKey);
 
             final Application app = new Application(kafkaConfiguration.streamsConfiguration(), beregnetSkattClient);
 

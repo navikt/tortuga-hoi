@@ -63,7 +63,7 @@
         <dependency>
             <groupId>no.nav.opptjening</groupId>
             <artifactId>skatt-client</artifactId>
-            <version>18</version>
+            <version>19</version>
         </dependency>
 
         <dependency>
