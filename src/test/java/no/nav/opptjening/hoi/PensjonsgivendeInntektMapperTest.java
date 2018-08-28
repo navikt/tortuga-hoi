@@ -5,11 +5,12 @@ import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class PensjonsgivendeInntektMapperTest {
 
     @Test
-    public void toPensjonsgivendeInntekt() throws Exception {
+    public void toPensjonsgivendeInntektOk() throws Exception {
         BeregnetSkatt beregnetSkatt = new BeregnetSkatt("12345678911", "2018", 5678L,
                 7890L, 8901L, 9012L,
                 89012L, 123456L, false);
@@ -29,4 +30,10 @@ public class PensjonsgivendeInntektMapperTest {
 
     }
 
+    @Test
+    public void toPensjonsGivendeInntektWithNullOk() {
+        BeregnetSkatt beregnetSkatt = null;
+        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(beregnetSkatt);
+        assertNull(pensjonsgivendeInntekt);
+    }
 }

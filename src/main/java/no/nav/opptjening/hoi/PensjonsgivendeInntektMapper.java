@@ -10,6 +10,9 @@ public class PensjonsgivendeInntektMapper implements ValueMapper<BeregnetSkatt, 
 
     @Override
     public PensjonsgivendeInntekt apply(BeregnetSkatt beregnetSkatt) {
+
+        if(beregnetSkatt == null) return null;
+
         return PensjonsgivendeInntekt.newBuilder()
                 .setPersonidentifikator(beregnetSkatt.getPersonidentifikator())
                 .setInntektsaar(beregnetSkatt.getInntektsaar())
