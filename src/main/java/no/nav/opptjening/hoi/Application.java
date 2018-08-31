@@ -62,7 +62,10 @@ public class Application {
                 .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
 
         streams = new KafkaStreams(builder.build(), properties);
-        streams.setUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception in thread {}", t, e));
+        streams.setUncaughtExceptionHandler((t, e) -> {
+            LOG.error("Uncaught exception in thread {}, closing streams", t, e);
+            streams.close();
+        });
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
