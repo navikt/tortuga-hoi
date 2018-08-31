@@ -27,7 +27,7 @@ public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetS
 
     @Override
     public BeregnetSkatt transform(Hendelse hendelse) {
-        LOG.info("HOI haandterer hendelse={}", hendelse);
+        LOG.trace("HOI haandterer hendelse={}", hendelse);
         inntektsHendelserProcessed.inc();
 
         try {
