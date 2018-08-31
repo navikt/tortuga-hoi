@@ -34,6 +34,7 @@ public class Application {
             final Application app = new Application(kafkaConfiguration.streamsConfiguration(), beregnetSkattClient);
 
             app.setStateListener((newState, oldState) -> {
+                LOG.debug("State change from {} to {}", oldState, newState);
                 if (oldState.equals(KafkaStreams.State.PENDING_SHUTDOWN) && newState.equals(KafkaStreams.State.NOT_RUNNING)) {
                     LOG.warn("Stream shutdown, stopping nais http server");
                     try {
