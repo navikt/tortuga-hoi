@@ -35,7 +35,8 @@ public class Application {
 
             app.setStateListener((newState, oldState) -> {
                 LOG.debug("State change from {} to {}", oldState, newState);
-                if (oldState.equals(KafkaStreams.State.PENDING_SHUTDOWN) && newState.equals(KafkaStreams.State.NOT_RUNNING)) {
+                if ((oldState.equals(KafkaStreams.State.PENDING_SHUTDOWN) && newState.equals(KafkaStreams.State.NOT_RUNNING)) ||
+                        (oldState.isRunning() && newState.equals(KafkaStreams.State.ERROR))) {
                     LOG.warn("Stream shutdown, stopping nais http server");
                     try {
                         naisHttpServer.stop();
