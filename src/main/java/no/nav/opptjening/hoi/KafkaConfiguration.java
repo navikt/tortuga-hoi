@@ -105,7 +105,7 @@ public class KafkaConfiguration {
         Map<String, Object> configs = getCommonConfigs();
         final java.util.Properties streamsConfiguration = new java.util.Properties();
         streamsConfiguration.putAll(configs);
-        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi-streams");
+        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi");
         streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
         streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
