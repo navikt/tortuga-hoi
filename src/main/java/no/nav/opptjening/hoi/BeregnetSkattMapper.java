@@ -16,8 +16,12 @@ public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetS
     private static final Logger LOG = LoggerFactory.getLogger(BeregnetSkattMapper.class);
     private final BeregnetSkattClient beregnetSkattClient;
 
+    private static final Counter inntektsHendelserProcessedTotal = Counter.build()
+            .name("beregnet_skatt_hendelser_processed")
+            .help("Antall hendelser prosessert").register();
     private static final Counter inntektsHendelserProcessed = Counter.build()
             .name("beregnet_skatt_hendelser_processed")
+            .labelNames("year")
             .help("Antall hendelser prosessert").register();
 
 
@@ -28,7 +32,8 @@ public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetS
     @Override
     public BeregnetSkatt transform(Hendelse hendelse) {
         LOG.trace("HOI haandterer hendelse={}", hendelse);
-        inntektsHendelserProcessed.inc();
+        inntektsHendelserProcessedTotal.inc();
+        inntektsHendelserProcessed.labels(hendelse.getGjelderPeriode()).inc();
 
         try {
             return beregnetSkattClient.getBeregnetSkatt("nav", hendelse.getGjelderPeriode(), hendelse.getIdentifikator());
