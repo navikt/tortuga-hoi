@@ -2,6 +2,7 @@ package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.nais.NaisHttpServer;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -55,9 +56,9 @@ public class Application {
 
     public Application(Properties properties, BeregnetSkattClient beregnetSkattClient) {
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
+        KStream<HendelseKey, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
         stream.filter(HendelseFilter::testThatHendelseIsFromValidYear)
-                .transformValues(() -> new BeregnetSkattMapper(beregnetSkattClient))
+                .mapValues(new BeregnetSkattMapper(beregnetSkattClient))
                 .mapValues(new PensjonsgivendeInntektMapper())
                 .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
 

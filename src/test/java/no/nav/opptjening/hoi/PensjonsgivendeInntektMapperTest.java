@@ -1,6 +1,7 @@
 package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import org.junit.Test;
 
@@ -15,7 +16,10 @@ public class PensjonsgivendeInntektMapperTest {
                 7890L, 8901L, 9012L,
                 89012L, 123456L, false);
 
-        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(beregnetSkatt);
+        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(HendelseKey.newBuilder()
+                .setGjelderPeriode(beregnetSkatt.getInntektsaar())
+                .setIdentifikator(beregnetSkatt.getPersonidentifikator())
+                .build(), beregnetSkatt);
 
         assertEquals(beregnetSkatt.getPersonidentifikator(), pensjonsgivendeInntekt.getPersonidentifikator());
         assertEquals(beregnetSkatt.getInntektsaar(), pensjonsgivendeInntekt.getInntektsaar());
@@ -33,7 +37,7 @@ public class PensjonsgivendeInntektMapperTest {
     @Test
     public void toPensjonsGivendeInntektWithNullOk() {
         BeregnetSkatt beregnetSkatt = null;
-        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(beregnetSkatt);
+        PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(null, beregnetSkatt);
         assertNull(pensjonsgivendeInntekt);
     }
 }

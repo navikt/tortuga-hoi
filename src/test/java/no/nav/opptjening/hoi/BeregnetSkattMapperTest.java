@@ -3,6 +3,7 @@ package no.nav.opptjening.hoi;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.junit.Before;
@@ -33,7 +34,9 @@ public class BeregnetSkattMapperTest {
                 null, null, null,
                 null, null, false);
         Hendelse hendelse = new Hendelse(0L, "12345678911", "2018");
-        BeregnetSkatt transformedHendelse = beregnetSkattMapper.transform(hendelse);
+        BeregnetSkatt transformedHendelse = beregnetSkattMapper.apply(HendelseKey.newBuilder()
+                .setGjelderPeriode("2018")
+                .setIdentifikator("12345678911").build(), hendelse);
         assertEquals(expectedBeregnetSkatt, transformedHendelse);
     }
 
@@ -41,7 +44,9 @@ public class BeregnetSkattMapperTest {
     public void transformReturnsNullWhenFantIkkeBeregnetSkattExceptionIsThrown() {
         createMockApi();
         Hendelse hendelse = new Hendelse(0L, "11987654321", "2014");
-        BeregnetSkatt transformedHendelse = beregnetSkattMapper.transform(hendelse);
+        BeregnetSkatt transformedHendelse = beregnetSkattMapper.apply(HendelseKey.newBuilder()
+                .setGjelderPeriode("2014")
+                .setIdentifikator("11987654321").build(), hendelse);
         assertNull(transformedHendelse);
     }
 

@@ -3,19 +3,21 @@ package no.nav.opptjening.hoi;
 import no.nav.opptjening.schema.Fastlandsinntekt;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.schema.Svalbardinntekt;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
-import org.apache.kafka.streams.kstream.ValueMapper;
+import org.apache.kafka.streams.kstream.ValueMapperWithKey;
 
-public class PensjonsgivendeInntektMapper implements ValueMapper<BeregnetSkatt, PensjonsgivendeInntekt> {
+public class PensjonsgivendeInntektMapper implements ValueMapperWithKey<HendelseKey, BeregnetSkatt, PensjonsgivendeInntekt> {
 
     @Override
-    public PensjonsgivendeInntekt apply(BeregnetSkatt beregnetSkatt) {
-
-        if(beregnetSkatt == null) return null;
+    public PensjonsgivendeInntekt apply(HendelseKey key, BeregnetSkatt beregnetSkatt) {
+        if (beregnetSkatt == null) {
+            return null;
+        }
 
         return PensjonsgivendeInntekt.newBuilder()
-                .setPersonidentifikator(beregnetSkatt.getPersonidentifikator())
-                .setInntektsaar(beregnetSkatt.getInntektsaar())
+                .setPersonidentifikator(key.getIdentifikator())
+                .setInntektsaar(key.getGjelderPeriode())
                 .setFastlandsinntekt(Fastlandsinntekt.newBuilder()
                         .setPersoninntektBarePensjonsdel(beregnetSkatt.getPersoninntektBarePensjonsdel().orElse(null))
                         .setPersoninntektLoenn(beregnetSkatt.getPersoninntektLoenn().orElse(null))

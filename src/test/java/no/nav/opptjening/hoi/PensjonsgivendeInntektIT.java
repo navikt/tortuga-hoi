@@ -7,6 +7,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import no.nav.common.KafkaEnvironment;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.*;
@@ -15,9 +16,6 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -40,7 +38,7 @@ public class PensjonsgivendeInntektIT {
     private static KafkaEnvironment kafkaEnvironment;
     private final Properties streamsConfiguration = new Properties();
 
-    private Consumer<String, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
+    private Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
     @Before
     public void setUp() {
@@ -62,16 +60,16 @@ public class PensjonsgivendeInntektIT {
         configs.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaEnvironment.getServerPark().getSchemaregistry().getUrl());
 
         Map<String, Object> producerConfig = new HashMap<>(configs);
-        producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
 
         producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
         producerConfig.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
 
-        Producer<String, Hendelse> producer = new KafkaProducer<>(producerConfig);
+        Producer<HendelseKey, Hendelse> producer = new KafkaProducer<>(producerConfig);
 
         Map<String, Object> consumerConfigs = new HashMap<>(configs);
-        consumerConfigs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerConfigs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
         consumerConfigs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
         consumerConfigs.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
         consumerConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, "loot-consumer-group");
@@ -96,7 +94,9 @@ public class PensjonsgivendeInntektIT {
 
         final String topic = "privat-tortuga-skatteoppgjorhendelse";
         for (Hendelse hendelse : hendelser) {
-            producer.send(new ProducerRecord<>(topic, hendelse.getGjelderPeriode() + "-" + hendelse.getIdentifikator(), hendelse));
+            producer.send(new ProducerRecord<>(topic, HendelseKey.newBuilder()
+                    .setIdentifikator(hendelse.getIdentifikator())
+                    .setGjelderPeriode(hendelse.getGjelderPeriode()).build(), hendelse));
         }
         producer.flush();
     }
@@ -181,7 +181,7 @@ public class PensjonsgivendeInntektIT {
         final Properties config = (Properties)streamsConfiguration.clone();
 
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi-streams");
-        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
@@ -211,9 +211,9 @@ public class PensjonsgivendeInntektIT {
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
         try {
             while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
-                ConsumerRecords<String, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
+                ConsumerRecords<HendelseKey, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
 
-                for (ConsumerRecord<String, PensjonsgivendeInntekt> record : consumerRecords) {
+                for (ConsumerRecord<HendelseKey, PensjonsgivendeInntekt> record : consumerRecords) {
                     LOG.info("Received record = {}", record);
                     latch.countDown();
                 }

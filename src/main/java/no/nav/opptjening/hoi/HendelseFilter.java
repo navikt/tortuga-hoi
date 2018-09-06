@@ -2,6 +2,7 @@ package no.nav.opptjening.hoi;
 
 import io.prometheus.client.Counter;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 
 public class HendelseFilter  {
 
@@ -16,9 +17,9 @@ public class HendelseFilter  {
 
     private static final int EARLIEST_VALID_HENDELSE_YEAR = 2017;
 
-    public static boolean testThatHendelseIsFromValidYear(String key, Hendelse hendelse) {
+    public static boolean testThatHendelseIsFromValidYear(HendelseKey key, Hendelse hendelse) {
         inntektsHendelserRecievedTotal.inc();
         inntektsHendelserRecieved.labels(hendelse.getGjelderPeriode()).inc();
-        return Integer.parseInt(hendelse.getGjelderPeriode()) >= EARLIEST_VALID_HENDELSE_YEAR;
+        return Integer.parseInt(key.getGjelderPeriode()) >= EARLIEST_VALID_HENDELSE_YEAR;
     }
 }

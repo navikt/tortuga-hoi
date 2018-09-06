@@ -2,17 +2,17 @@ package no.nav.opptjening.hoi;
 
 import io.prometheus.client.Counter;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
+import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.exceptions.FantIkkeBeregnetSkattException;
-import org.apache.kafka.streams.kstream.ValueTransformer;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.kstream.ValueMapperWithKey;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetSkatt> {
+public class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hendelse, BeregnetSkatt> {
     private static final Logger LOG = LoggerFactory.getLogger(BeregnetSkattMapper.class);
     private final BeregnetSkattClient beregnetSkattClient;
 
@@ -30,13 +30,13 @@ public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetS
     }
 
     @Override
-    public BeregnetSkatt transform(Hendelse hendelse) {
+    public BeregnetSkatt apply(HendelseKey key, Hendelse hendelse) {
         LOG.trace("HOI haandterer hendelse={}", hendelse);
         inntektsHendelserProcessedTotal.inc();
-        inntektsHendelserProcessed.labels(hendelse.getGjelderPeriode()).inc();
+        inntektsHendelserProcessed.labels(key.getGjelderPeriode()).inc();
 
         try {
-            return beregnetSkattClient.getBeregnetSkatt("nav", hendelse.getGjelderPeriode(), hendelse.getIdentifikator());
+            return beregnetSkattClient.getBeregnetSkatt("nav", key.getGjelderPeriode(), key.getIdentifikator());
         } catch (FantIkkeBeregnetSkattException e) {
             LOG.info("Fant ikke beregnet skatt, returnerer null", e);
             return null;
@@ -44,13 +44,4 @@ public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetS
             throw new RuntimeException(e);
         }
     }
-
-    @Override
-    public void init(ProcessorContext processorContext) { }
-
-    @Override
-    public BeregnetSkatt punctuate(long l) { return null; }
-
-    @Override
-    public void close() { }
 }
