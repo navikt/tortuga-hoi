@@ -17,7 +17,7 @@ public class BeregnetSkattMapper implements ValueTransformer<Hendelse, BeregnetS
     private final BeregnetSkattClient beregnetSkattClient;
 
     private static final Counter inntektsHendelserProcessedTotal = Counter.build()
-            .name("beregnet_skatt_hendelser_processed")
+            .name("beregnet_skatt_hendelser_processed_total")
             .help("Antall hendelser prosessert").register();
     private static final Counter inntektsHendelserProcessed = Counter.build()
             .name("beregnet_skatt_hendelser_processed")
