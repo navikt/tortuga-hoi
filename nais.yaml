@@ -1,5 +1,6 @@
 name: tortuga-hoi
 image: repo.adeo.no:5443/tortuga-hoi
+team: peon
 replicas:
   min: 20
   max: 20
