@@ -22,9 +22,6 @@ public class Application {
         Map<String, String> env = System.getenv();
 
         try {
-            final NaisHttpServer naisHttpServer = new NaisHttpServer();
-            naisHttpServer.start();
-
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
 
             String beregnetSkattUrl = env.get("SKATT_API_URL");
@@ -33,25 +30,27 @@ public class Application {
             final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(beregnetSkattUrl, skattApiKey);
 
             final Application app = new Application(kafkaConfiguration.streamsConfiguration(), beregnetSkattClient);
-
-            app.setStateListener((newState, oldState) -> {
-                LOG.debug("State change from {} to {}", oldState, newState);
-                if ((oldState.equals(KafkaStreams.State.PENDING_SHUTDOWN) && newState.equals(KafkaStreams.State.NOT_RUNNING)) ||
-                        (oldState.isRunning() && newState.equals(KafkaStreams.State.ERROR))) {
-                    LOG.warn("Stream shutdown, stopping nais http server");
-                    try {
-                        naisHttpServer.stop();
-                    } catch (Exception e) {
-                        LOG.error("Error while shutting down nais http server", e);
-                    }
-                }
-            });
-
             app.start();
+
+            final NaisHttpServer naisHttpServer = new NaisHttpServer(app::isRunning, () -> true);
+            naisHttpServer.start();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    LOG.info("stopping nais http server");
+                    naisHttpServer.stop();
+                } catch (Exception e) {
+                    LOG.error("Error while shutting down nais http server", e);
+                }
+            }));
+
         } catch (Exception e) {
             LOG.error("Application failed to start", e);
             System.exit(1);
         }
+    }
+
+    private boolean isRunning() {
+        return streams.state().isRunning();
     }
 
     public Application(Properties properties, BeregnetSkattClient beregnetSkattClient) {
@@ -67,12 +66,11 @@ public class Application {
             LOG.error("Uncaught exception in thread {}, closing streams", t, e);
             streams.close();
         });
+        streams.setStateListener((newState, oldState) -> {
+            LOG.debug("State change from {} to {}", oldState, newState);
+        });
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-    }
-
-    void setStateListener(KafkaStreams.StateListener listener) {
-        streams.setStateListener(listener);
     }
 
     public void start() {
