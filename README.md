@@ -44,9 +44,7 @@ Navnet som angis til `--network` kan variere og du bør sjekke opp i dette og ev
 
 # Henvendelser
 
-Spørsmål knyttet til koden eller prosjektet kan rettes mot:
-
-* David Steinsland, david.steinsland@nav.no
+Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub.
 
 ## For NAV-ansatte
 
