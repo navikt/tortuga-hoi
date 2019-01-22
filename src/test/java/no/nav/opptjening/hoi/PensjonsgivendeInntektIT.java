@@ -21,6 +21,7 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -211,7 +212,7 @@ public class PensjonsgivendeInntektIT {
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
         try {
             while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
-                ConsumerRecords<HendelseKey, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(500);
+                ConsumerRecords<HendelseKey, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(Duration.ofSeconds(5L));
 
                 for (ConsumerRecord<HendelseKey, PensjonsgivendeInntekt> record : consumerRecords) {
                     LOG.info("Received record = {}", record);
