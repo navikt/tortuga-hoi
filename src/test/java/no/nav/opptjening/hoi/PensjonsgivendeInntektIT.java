@@ -187,7 +187,8 @@ public class PensjonsgivendeInntektIT {
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         final BeregnetSkattClient client = new BeregnetSkattClient("http://localhost:" + wireMockRule.port() + "/", "foobar");
-        final Application app = new Application(config, client);
+        final HendelseFilter hendelseFilter = new HendelseFilter("2017");
+        final Application app = new Application(config, client, hendelseFilter);
 
         createTestRecords();
         createMockApi();

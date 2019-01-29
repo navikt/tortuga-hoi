@@ -23,13 +23,16 @@ public class Application {
 
         try {
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
+            Properties streamsConfig = kafkaConfiguration.streamsConfiguration();
 
             String beregnetSkattUrl = env.get("SKATT_API_URL");
             String skattApiKey = env.get("SKATT_API_KEY");
-
             final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(beregnetSkattUrl, skattApiKey);
 
-            final Application app = new Application(kafkaConfiguration.streamsConfiguration(), beregnetSkattClient);
+            String earliestValidHendelseYear = env.get("EARLIEST_VALID_HENDELSE_YEAR");
+            final HendelseFilter hendelseFilter = new HendelseFilter(earliestValidHendelseYear);
+
+            final Application app = new Application(streamsConfig, beregnetSkattClient, hendelseFilter);
             app.start();
 
             final NaisHttpServer naisHttpServer = new NaisHttpServer(app::isRunning, () -> true);
@@ -53,15 +56,16 @@ public class Application {
         return streams.state().isRunning();
     }
 
-    public Application(Properties properties, BeregnetSkattClient beregnetSkattClient) {
+    public Application(Properties streamsConfig, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
+
         StreamsBuilder builder = new StreamsBuilder();
         KStream<HendelseKey, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
-        stream.filter(HendelseFilter::testThatHendelseIsFromValidYear)
+        stream.filter(hendelseFilter::testThatHendelseIsFromValidYear)
                 .mapValues(new BeregnetSkattMapper(beregnetSkattClient))
                 .mapValues(new PensjonsgivendeInntektMapper())
                 .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
 
-        streams = new KafkaStreams(builder.build(), properties);
+        streams = new KafkaStreams(builder.build(), streamsConfig);
         streams.setUncaughtExceptionHandler((t, e) -> {
             LOG.error("Uncaught exception in thread {}, closing streams", t, e);
             streams.close();

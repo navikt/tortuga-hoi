@@ -15,11 +15,15 @@ public class HendelseFilter  {
             .labelNames("year")
             .help("Antall hendelser mottatt").register();
 
-    private static final int EARLIEST_VALID_HENDELSE_YEAR = 2017;
+    private static int earliestValidHendelseYear;
 
-    public static boolean testThatHendelseIsFromValidYear(HendelseKey key, Hendelse hendelse) {
+    public HendelseFilter(String earliestValidHendelseYear) {
+        this.earliestValidHendelseYear = Integer.parseInt(earliestValidHendelseYear);
+    }
+
+    public boolean testThatHendelseIsFromValidYear(HendelseKey key, Hendelse hendelse) {
         inntektsHendelserRecievedTotal.inc();
         inntektsHendelserRecieved.labels(hendelse.getGjelderPeriode()).inc();
-        return Integer.parseInt(key.getGjelderPeriode()) >= EARLIEST_VALID_HENDELSE_YEAR;
+        return Integer.parseInt(key.getGjelderPeriode()) >= earliestValidHendelseYear;
     }
 }
