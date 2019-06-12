@@ -43,7 +43,7 @@ public class PensjonsgivendeInntektIT {
 
     @Before
     public void setUp() {
-        kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, true, false, Collections.emptyList(), false);
+        kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, Collections.emptyList(), true, false, Collections.emptyList(), false, new Properties());
         kafkaEnvironment.start();
 
         streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaEnvironment.getBrokersURL());
