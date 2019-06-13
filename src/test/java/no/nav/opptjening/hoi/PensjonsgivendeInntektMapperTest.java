@@ -3,15 +3,15 @@ package no.nav.opptjening.hoi;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class PensjonsgivendeInntektMapperTest {
+class PensjonsgivendeInntektMapperTest {
 
     @Test
-    public void toPensjonsgivendeInntektOk() throws Exception {
+    void toPensjonsgivendeInntektOk() {
         BeregnetSkatt beregnetSkatt = new BeregnetSkatt("12345678911", "2018", 5678L,
                 7890L, 8901L, 9012L,
                 89012L, 123456L, false);
@@ -35,7 +35,7 @@ public class PensjonsgivendeInntektMapperTest {
     }
 
     @Test
-    public void toPensjonsGivendeInntektWithNullOk() {
+    void toPensjonsGivendeInntektWithNullOk() {
         BeregnetSkatt beregnetSkatt = null;
         PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(null, beregnetSkatt);
         assertNull(pensjonsgivendeInntekt);

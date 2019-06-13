@@ -1,34 +1,36 @@
 package no.nav.opptjening.hoi;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class BeregnetSkattMapperTest {
+class BeregnetSkattMapperTest {
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule();
 
-    private BeregnetSkattClient beregnetSkattClient;
-    private BeregnetSkattMapper beregnetSkattMapper;
+    private static final WireMockServer wireMockServer = new WireMockServer(8080);
 
-    @Before
-    public void setUp() {
-        beregnetSkattClient = new BeregnetSkattClient("http://localhost:" + wireMockRule.port() + "/", "foobar");
+    private static BeregnetSkattClient beregnetSkattClient;
+    private static BeregnetSkattMapper beregnetSkattMapper;
+
+    @BeforeAll
+    static void setUp() {
+        wireMockServer.start();
+        createMockApi();
+        beregnetSkattClient = new BeregnetSkattClient("http://localhost:" + wireMockServer.port() + "/", "foobar");
         beregnetSkattMapper = new BeregnetSkattMapper(beregnetSkattClient);
     }
 
     @Test
-    public void transformReturnsValidBeregnetskatt() throws Exception{
+    void transformReturnsValidBeregnetskatt() {
         createMockApi();
         BeregnetSkatt expectedBeregnetSkatt = new BeregnetSkatt("12345678911", "2018", 350371L,
                 null, null, null,
@@ -41,7 +43,7 @@ public class BeregnetSkattMapperTest {
     }
 
     @Test
-    public void transformReturnsNullWhenFantIkkeBeregnetSkattExceptionIsThrown() {
+    void transformReturnsNullWhenFantIkkeBeregnetSkattExceptionIsThrown() {
         createMockApi();
         Hendelse hendelse = new Hendelse(0L, "11987654321", "2014");
         BeregnetSkatt transformedHendelse = beregnetSkattMapper.apply(HendelseKey.newBuilder()
@@ -50,7 +52,7 @@ public class BeregnetSkattMapperTest {
         assertNull(transformedHendelse);
     }
 
-    private void createMockApi() {
+    private static void createMockApi() {
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345678911"))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"))
                 .willReturn(WireMock.okJson("{\n" +

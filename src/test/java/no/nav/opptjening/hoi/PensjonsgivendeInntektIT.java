@@ -1,7 +1,7 @@
 package no.nav.opptjening.hoi;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.confluent.kafka.serializers.*;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import no.nav.common.KafkaEnvironment;
@@ -17,7 +17,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.streams.StreamsConfig;
-import org.junit.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,12 +28,14 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class PensjonsgivendeInntektIT {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PensjonsgivendeInntektIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(PensjonsgivendeInntektIT.class);
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule();
+    private static final WireMockServer wireMockServer = new WireMockServer();
 
     private static final int NUMBER_OF_BROKERS = 3;
     private static final List<String> TOPICS = Arrays.asList("privat-tortuga-skatteoppgjorhendelse", "aapen-opptjening-pensjonsgivendeInntekt");
@@ -41,8 +45,9 @@ public class PensjonsgivendeInntektIT {
 
     private Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
+        wireMockServer.start();
         kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, Collections.emptyList(), true, false, Collections.emptyList(), false, new Properties());
         kafkaEnvironment.start();
 
@@ -50,9 +55,41 @@ public class PensjonsgivendeInntektIT {
         streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaEnvironment.getSchemaRegistry().getUrl());
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         kafkaEnvironment.tearDown();
+    }
+
+    @Test
+    void kafkaStreamProcessesCorrectRecordsAndProducesOnNewTopic() throws Exception {
+        final Properties config = (Properties) streamsConfiguration.clone();
+
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi-streams");
+        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
+        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        final BeregnetSkattClient client = new BeregnetSkattClient("http://localhost:" + wireMockServer.port() + "/", "foobar");
+        final HendelseFilter hendelseFilter = new HendelseFilter("2017");
+        final Application app = new Application(config, client, hendelseFilter);
+
+        createTestRecords();
+        createMockApi();
+
+        CountDownLatch expectedProducedRecordsCount = new CountDownLatch(6);
+
+        Thread t1 = new Thread(() -> pensjonsgivendeInntektConsumerThread(expectedProducedRecordsCount));
+
+        try {
+            app.start();
+            t1.start();
+
+            assertTrue(expectedProducedRecordsCount.await(50000L, TimeUnit.MILLISECONDS));
+            assertEquals(0, expectedProducedRecordsCount.getCount());
+        } finally {
+            t1.interrupt();
+            app.shutdown();
+        }
     }
 
     private void createTestRecords() {
@@ -177,37 +214,6 @@ public class PensjonsgivendeInntektIT {
                         "}")));
     }
 
-    @Test
-    public void kafkaStreamProcessesCorrectRecordsAndProducesOnNewTopic() throws Exception {
-        final Properties config = (Properties)streamsConfiguration.clone();
-
-        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi-streams");
-        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
-        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        final BeregnetSkattClient client = new BeregnetSkattClient("http://localhost:" + wireMockRule.port() + "/", "foobar");
-        final HendelseFilter hendelseFilter = new HendelseFilter("2017");
-        final Application app = new Application(config, client, hendelseFilter);
-
-        createTestRecords();
-        createMockApi();
-
-        CountDownLatch expectedProducedRecordsCount = new CountDownLatch(6);
-
-        Thread t1 = new Thread(() -> pensjonsgivendeInntektConsumerThread(expectedProducedRecordsCount));
-
-        try {
-            app.start();
-            t1.start();
-
-            Assert.assertTrue(expectedProducedRecordsCount.await(50000L, TimeUnit.MILLISECONDS));
-            Assert.assertEquals(0, expectedProducedRecordsCount.getCount());
-        } finally {
-            t1.interrupt();
-            app.shutdown();
-        }
-    }
 
     private void pensjonsgivendeInntektConsumerThread(CountDownLatch latch) {
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));

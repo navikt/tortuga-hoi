@@ -2,24 +2,25 @@ package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class HendelseFilterTest {
+
+class HendelseFilterTest {
 
     private HendelseFilter hendelseFilter;
     private static final String EARLIEST_VALID_HENDELSE_YEAR = "2017";
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         hendelseFilter = new HendelseFilter(EARLIEST_VALID_HENDELSE_YEAR);
     }
 
     @Test
-    public void testReturnsFalseWhenHendelserIsFromInvalidYear() {
+    void testReturnsFalseWhenHendelserIsFromInvalidYear() {
         Hendelse hendelseFromInvalidYear = new Hendelse(1L, "123456789", "2015");
         Hendelse hendelseFromInvalidYear2 = new Hendelse(2L, "234567890", "2016");
         assertFalse(hendelseFilter.testThatHendelseIsFromValidYear(HendelseKey.newBuilder()
@@ -33,7 +34,7 @@ public class HendelseFilterTest {
     }
 
     @Test
-    public void testReturnsTrueWhenHendelserIsFromValidYear() {
+    void testReturnsTrueWhenHendelserIsFromValidYear() {
         Hendelse hendelseFromValidYear = new Hendelse(1L, "123456789", "2017");
         Hendelse hendelseFromValidYear2 = new Hendelse(2L, "234567890", "2018");
         assertTrue(hendelseFilter.testThatHendelseIsFromValidYear(HendelseKey.newBuilder()
