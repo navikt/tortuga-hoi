@@ -6,7 +6,9 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
+import no.nav.opptjening.skatt.client.api.JsonApi;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -18,15 +20,20 @@ class BeregnetSkattMapperTest {
 
     private static final WireMockServer wireMockServer = new WireMockServer(8080);
 
-    private static BeregnetSkattClient beregnetSkattClient;
     private static BeregnetSkattMapper beregnetSkattMapper;
 
     @BeforeAll
     static void setUp() {
         wireMockServer.start();
         createMockApi();
-        beregnetSkattClient = new BeregnetSkattClient("http://localhost:" + wireMockServer.port() + "/", "foobar");
+        JsonApi jsonApi = new JsonApi(()->"foobar");
+        var beregnetSkattClient = new BeregnetSkattClient(null, "http://localhost:" + wireMockServer.port() + "/", jsonApi);
         beregnetSkattMapper = new BeregnetSkattMapper(beregnetSkattClient);
+    }
+
+    @AfterAll
+    static void tearDown(){
+        wireMockServer.stop();
     }
 
     @Test
@@ -37,7 +44,7 @@ class BeregnetSkattMapperTest {
                 null, null, false);
         Hendelse hendelse = new Hendelse(0L, "12345678911", "2018");
         BeregnetSkatt transformedHendelse = beregnetSkattMapper.apply(HendelseKey.newBuilder()
-                .setGjelderPeriode("2018")
+                .setGjelderPeriode("2017")
                 .setIdentifikator("12345678911").build(), hendelse);
         assertEquals(expectedBeregnetSkatt, transformedHendelse);
     }
@@ -53,7 +60,7 @@ class BeregnetSkattMapperTest {
     }
 
     private static void createMockApi() {
-        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345678911"))
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2017/12345678911"))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"))
                 .willReturn(WireMock.okJson("{\n" +
                         "  \"personidentifikator\": \"12345678911\",\n" +

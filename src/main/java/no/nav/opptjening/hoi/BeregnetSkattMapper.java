@@ -5,14 +5,13 @@ import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
-import no.nav.opptjening.skatt.client.api.beregnetskatt.exceptions.FantIkkeBeregnetSkattException;
+import no.nav.opptjening.skatt.client.api.beregnetskatt.FantIkkeBeregnetSkattException;
 import org.apache.kafka.streams.kstream.ValueMapperWithKey;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hendelse, BeregnetSkatt> {
+class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hendelse, BeregnetSkatt> {
     private static final Logger LOG = LoggerFactory.getLogger(BeregnetSkattMapper.class);
     private final BeregnetSkattClient beregnetSkattClient;
 
@@ -25,7 +24,7 @@ public class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hend
             .help("Antall hendelser prosessert").register();
 
 
-    public BeregnetSkattMapper(@NotNull BeregnetSkattClient beregnetSkattClient) {
+    public BeregnetSkattMapper(BeregnetSkattClient beregnetSkattClient) {
         this.beregnetSkattClient = beregnetSkattClient;
     }
 

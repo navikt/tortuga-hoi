@@ -3,7 +3,10 @@ package no.nav.opptjening.hoi;
 import no.nav.opptjening.nais.NaisHttpServer;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
+import no.nav.opptjening.skatt.client.api.AuthenticationHeader;
+import no.nav.opptjening.skatt.client.api.JsonApi;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
+import no.nav.opptjening.skatt.client.api.beregnetskatt.SvalbardApi;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
@@ -19,17 +22,21 @@ public class Application {
     private final KafkaStreams streams;
 
     public static void main(String[] args) {
-        Map<String, String> env = System.getenv();
+        Map<String, String> environment = System.getenv();
 
         try {
-            KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(env);
+            KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(environment);
             Properties streamsConfig = kafkaConfiguration.streamsConfiguration();
 
-            String beregnetSkattUrl = env.get("SKATT_API_URL");
-            String skattApiKey = env.get("SKATT_API_KEY");
-            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(beregnetSkattUrl, skattApiKey);
+            String beregnetSkattUrl = environment.get("SKATT_API_URL");
+            String summertskattApiUrl = environment.get("SUMMERTSKATT_API_URL");
 
-            String earliestValidHendelseYear = env.get("EARLIEST_VALID_HENDELSE_YEAR");
+            AuthenticationHeader authenticationHeader = new AuthenticationFromEnv(environment);
+            JsonApi jsonApi = new JsonApi(authenticationHeader);
+            SvalbardApi svalbardApi = new SvalbardApi(summertskattApiUrl, jsonApi);
+            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(svalbardApi, beregnetSkattUrl, jsonApi);
+
+            String earliestValidHendelseYear = environment.get("EARLIEST_VALID_HENDELSE_YEAR");
             final HendelseFilter hendelseFilter = new HendelseFilter(earliestValidHendelseYear);
 
             final Application app = new Application(streamsConfig, beregnetSkattClient, hendelseFilter);
@@ -70,9 +77,9 @@ public class Application {
             LOG.error("Uncaught exception in thread {}, closing streams", t, e);
             streams.close();
         });
-        streams.setStateListener((newState, oldState) -> {
-            LOG.debug("State change from {} to {}", oldState, newState);
-        });
+        streams.setStateListener((newState, oldState) ->
+            LOG.debug("State change from {} to {}", oldState, newState)
+        );
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }

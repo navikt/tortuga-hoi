@@ -7,7 +7,7 @@ import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import org.apache.kafka.streams.kstream.ValueMapperWithKey;
 
-public class PensjonsgivendeInntektMapper implements ValueMapperWithKey<HendelseKey, BeregnetSkatt, PensjonsgivendeInntekt> {
+class PensjonsgivendeInntektMapper implements ValueMapperWithKey<HendelseKey, BeregnetSkatt, PensjonsgivendeInntekt> {
 
     @Override
     public PensjonsgivendeInntekt apply(HendelseKey key, BeregnetSkatt beregnetSkatt) {
