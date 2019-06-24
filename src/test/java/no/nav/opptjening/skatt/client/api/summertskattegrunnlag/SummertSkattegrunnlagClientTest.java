@@ -4,7 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
-import no.nav.opptjening.skatt.client.api.JsonApi;
+import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.SvalbardApi;
 import org.junit.jupiter.api.AfterAll;
@@ -16,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SummertSkattegrunnlagClientTest {
 
-
     private static final WireMockServer WIREMOCKSERVER = new WireMockServer(8080);
     private static final String API_KEY = "my-api-key";
     private static BeregnetSkattClient beregnetSkattClient;
@@ -24,12 +23,10 @@ class SummertSkattegrunnlagClientTest {
     @BeforeAll
     static void setUp(){
         WIREMOCKSERVER.start();
-        var jsonApi = new JsonApi(()->API_KEY);
+        var jsonApi = JsonApiBuilder.createJsonApi(()->API_KEY);
         var svalbardApi = new SvalbardApi("http://localhost:" + WIREMOCKSERVER.port() + "/summertskatt/", jsonApi );
         beregnetSkattClient = new BeregnetSkattClient(svalbardApi, "http://localhost:" + WIREMOCKSERVER.port() + "/beregnetskatt/", jsonApi);
     }
-
-
 
     private static void stubJsonResponseFromEndpoint(String endpoint, String jsonResponse) {
         WIREMOCKSERVER.stubFor(WireMock.get(WireMock.urlPathEqualTo(endpoint))
@@ -47,8 +44,6 @@ class SummertSkattegrunnlagClientTest {
     static  void tearDown(){
         WIREMOCKSERVER.stop();
     }
-
-
 
     @Test
     void skaHenteSvalbardLoennFraSummertSkatt() {
@@ -84,7 +79,6 @@ class SummertSkattegrunnlagClientTest {
         assertEquals((Long) 123456L, result.getSvalbardPersoninntektNaering().orElse(null));
     }
 
-
     @Test
     void svalbardFeiler() {
         stubErrorResponse("/summertskatt/nav/2018/12345678901");
@@ -93,7 +87,6 @@ class SummertSkattegrunnlagClientTest {
        assertThrows(RuntimeException.class, ()->beregnetSkattClient.getBeregnetSkatt("nav","2018", "12345678901"));
 
     }
-
 
     @Test
     void skalBareHenteSvalbardInntektFraSummertSkattOmInntektsAarErFoer2018() {
@@ -110,10 +103,6 @@ class SummertSkattegrunnlagClientTest {
         assertTrue(result.getSvalbardLoennLoennstrekkordningen().isEmpty());
         assertEquals((Long) 123456L, result.getSvalbardPersoninntektNaering().orElse(null));
     }
-
-
-
-
 
     private static String beregnetSkattJsonBody() {
         return "{\n" +
@@ -203,7 +192,6 @@ class SummertSkattegrunnlagClientTest {
                 "}";
     }
 
-
     private static String summertSkattUtenSvalbardLoennJsonBody(){
         return "{\n" +
                 "  \"personidentifikator\": \"12345678910\",\n" +
@@ -272,6 +260,5 @@ class SummertSkattegrunnlagClientTest {
                 "  ]\n" +
                 "}";
     }
-
 
 }

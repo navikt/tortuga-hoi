@@ -11,13 +11,15 @@ import static no.nav.opptjening.skatt.client.api.HttpLogger.logSendingRequest;
 
 public class JsonApi {
 
-    private final HttpClient client = HttpClient.newHttpClient();
-    private final JsonDeserializer jsonDeserializer = new JsonDeserializer();
+    private final HttpClient client;
+    private final JsonDeserializer jsonDeserializer;
     private final HttpErrorHandler errorHandler;
     private final AuthenticationHeader authenticationHeader;
 
-    public JsonApi(AuthenticationHeader authenticationHeader) {
-        this.errorHandler = new HttpErrorHandler(jsonDeserializer);
+    public JsonApi(HttpClient client, JsonDeserializer jsonDeserializer, HttpErrorHandler errorHandler, AuthenticationHeader authenticationHeader) {
+        this.client = client;
+        this.jsonDeserializer = jsonDeserializer;
+        this.errorHandler = errorHandler;
         this.authenticationHeader = authenticationHeader;
     }
 

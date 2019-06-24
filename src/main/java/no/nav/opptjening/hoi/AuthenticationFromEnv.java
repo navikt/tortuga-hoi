@@ -6,14 +6,28 @@ import java.util.Map;
 
 public class AuthenticationFromEnv implements AuthenticationHeader {
 
+    private static final String beregnetSkattApiKey = "SKATT_API_KEY";
+    private static final String summertSkattegrunnlagApiKey = "SUMMERTSKATTEGRUNNLAG_API_KEY";
+
     private final String apiKey;
 
-    public AuthenticationFromEnv(Map<String, String> environment) {
-        this.apiKey = environment.get("SKATT_API_KEY");
+    private AuthenticationFromEnv(Map<String, String> environment, String keyName) {
+        this.apiKey = environment.get(keyName);
+    }
+
+    static AuthenticationHeader forSummertSkatt(Map<String, String> environment){
+        return new AuthenticationFromEnv(environment, summertSkattegrunnlagApiKey);
+    }
+
+    static AuthenticationHeader forBeregnetSkatt(Map<String, String> environment){
+        return new AuthenticationFromEnv(environment, beregnetSkattApiKey);
     }
 
     @Override
     public String value() {
         return apiKey;
     }
+
+
+
 }

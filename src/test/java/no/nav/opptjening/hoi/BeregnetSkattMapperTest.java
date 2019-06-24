@@ -7,6 +7,7 @@ import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.JsonApi;
+import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,7 +27,7 @@ class BeregnetSkattMapperTest {
     static void setUp() {
         wireMockServer.start();
         createMockApi();
-        JsonApi jsonApi = new JsonApi(()->"foobar");
+        JsonApi jsonApi = JsonApiBuilder.createJsonApi(()->"foobar");
         var beregnetSkattClient = new BeregnetSkattClient(null, "http://localhost:" + wireMockServer.port() + "/", jsonApi);
         beregnetSkattMapper = new BeregnetSkattMapper(beregnetSkattClient);
     }

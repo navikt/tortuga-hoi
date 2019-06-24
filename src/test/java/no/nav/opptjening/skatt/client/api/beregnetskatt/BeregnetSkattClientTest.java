@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.JsonApi;
+import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.exceptions.BadRequestException;
 import no.nav.opptjening.skatt.client.exceptions.ClientException;
 import no.nav.opptjening.skatt.client.exceptions.ServerException;
@@ -23,7 +24,7 @@ class BeregnetSkattClientTest {
     @BeforeEach
     void setUp() {
         wireMockRule.start();
-        JsonApi jsonApi = new JsonApi(()->"my-api-key");
+        JsonApi jsonApi = JsonApiBuilder.createJsonApi(()->"my-api-key");
         this.beregnetSkattClient = new BeregnetSkattClient(null, "http://localhost:" + wireMockRule.port() + "/", jsonApi);
     }
 

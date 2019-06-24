@@ -3,8 +3,8 @@ package no.nav.opptjening.hoi;
 import no.nav.opptjening.nais.NaisHttpServer;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
-import no.nav.opptjening.skatt.client.api.AuthenticationHeader;
 import no.nav.opptjening.skatt.client.api.JsonApi;
+import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.SvalbardApi;
 import org.apache.kafka.streams.KafkaStreams;
@@ -29,12 +29,12 @@ public class Application {
             Properties streamsConfig = kafkaConfiguration.streamsConfiguration();
 
             String beregnetSkattUrl = environment.get("SKATT_API_URL");
-            String summertskattApiUrl = environment.get("SUMMERTSKATT_API_URL");
+            String summertskattApiUrl = environment.get("SUMMERTSKATTEGRUNNLAG_API_URL");
 
-            AuthenticationHeader authenticationHeader = new AuthenticationFromEnv(environment);
-            JsonApi jsonApi = new JsonApi(authenticationHeader);
-            SvalbardApi svalbardApi = new SvalbardApi(summertskattApiUrl, jsonApi);
-            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(svalbardApi, beregnetSkattUrl, jsonApi);
+            JsonApi jsonApiForBeregnetSkatt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forBeregnetSkatt(environment));
+            JsonApi jsonApiForSvalbardinntekt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forSummertSkatt(environment));
+            SvalbardApi svalbardApi = new SvalbardApi(summertskattApiUrl, jsonApiForSvalbardinntekt);
+            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(svalbardApi, beregnetSkattUrl, jsonApiForBeregnetSkatt);
 
             String earliestValidHendelseYear = environment.get("EARLIEST_VALID_HENDELSE_YEAR");
             final HendelseFilter hendelseFilter = new HendelseFilter(earliestValidHendelseYear);
