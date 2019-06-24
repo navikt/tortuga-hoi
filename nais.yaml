@@ -23,8 +23,8 @@ fasitResources:
         url: SKATT_API_URL
     - alias: eksternapp.skatt.datasamarbeid.api.summertskattegrunnlag
       resourceType: restservice
-       propertyMap:
-         url: SUMMERTSKATTEGRUNNLAG_API_URL
+      propertyMap:
+        url: SUMMERTSKATTEGRUNNLAG_API_URL
     - alias: srvtortuga-hoi
       resourceType: credential
       propertyMap:
@@ -38,6 +38,3 @@ fasitResources:
       resourceType: credential
       propertyMap:
         password: SUMMERTSKATTEGRUNNLAG_API_KEY
-
-
-
