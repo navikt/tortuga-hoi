@@ -24,7 +24,7 @@ class SummertSkattegrunnlagClientTest {
     static void setUp(){
         WIREMOCKSERVER.start();
         var jsonApi = JsonApiBuilder.createJsonApi(()->API_KEY);
-        var svalbardApi = new SvalbardApi("http://localhost:" + WIREMOCKSERVER.port() + "/summertskatt/", jsonApi );
+        var svalbardApi = new SvalbardApi("http://localhost:" + WIREMOCKSERVER.port() + "/summertskatt/nav/", jsonApi );
         beregnetSkattClient = new BeregnetSkattClient(svalbardApi, "http://localhost:" + WIREMOCKSERVER.port() + "/beregnetskatt/", jsonApi);
     }
 
