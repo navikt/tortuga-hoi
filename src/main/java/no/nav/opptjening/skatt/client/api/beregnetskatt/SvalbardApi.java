@@ -18,8 +18,8 @@ public class SvalbardApi {
     }
 
 
-    Optional<Long> fetchSvalbardLoennsInntekt(String rettighetspakke, String inntektsaar, String personidentifikator){
-        //api-gw legger for summertskattegrunnlag på rettigspakke selv
+    Optional<Long> fetchSvalbardLoennsInntekt(String inntektsaar, String personidentifikator){
+        //api-gw legger for summertskattegrunnlag på "rettigspakke" selv
         return finnLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(jsonApi.fetch(String.format("%s%s/%s", endepunkt, inntektsaar, personidentifikator)));
     }
 }

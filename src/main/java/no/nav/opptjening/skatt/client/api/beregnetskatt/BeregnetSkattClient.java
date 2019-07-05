@@ -24,7 +24,7 @@ public class BeregnetSkattClient {
         if(svalbardLoennIkkeErFlyttetTilSummertSkattegrunnlag(inntektsaar))
             return beregnetSkattUtenSvalbardLoennLoennstrekkordningen;
 
-        Optional<Long> svalbardLoenn = svalbardApi.fetchSvalbardLoennsInntekt(rettighetspakke, inntektsaar, personidentifikator);
+        Optional<Long> svalbardLoenn = svalbardApi.fetchSvalbardLoennsInntekt(inntektsaar, personidentifikator);
         return beregnetSkattUtenSvalbardLoennLoennstrekkordningen.withSvalbardLoenn(svalbardLoenn.orElse(null));
     }
 
