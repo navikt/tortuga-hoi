@@ -33,7 +33,7 @@ docker run \
     -e KAFKA_SASL_JAAS_CONFIG= \
     -e KAFKA_SASL_MECHANISM= \
     -e KAFKA_SECURITY_PROTOCOL= \
-    -e SKATT_API_URL=http://testapi:8080/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/ \
+    -e BEREGNETSKATT_API_URL=http://testapi:8080/ekstern/skatt/datasamarbeid/api/formueinntekt/beregnetskatt/ \
     --network=tortuga_default \
     repo.adeo.no:5443/tortuga-hoi
 ```

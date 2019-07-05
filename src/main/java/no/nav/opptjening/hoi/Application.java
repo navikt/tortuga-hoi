@@ -27,8 +27,7 @@ public class Application {
         try {
             KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(environment);
             Properties streamsConfig = kafkaConfiguration.streamsConfiguration();
-
-            String beregnetSkattUrl = environment.get("SKATT_API_URL");
+            String beregnetSkattUrl = environment.get("BEREGNETSKATT_API_URL");
             String summertskattApiUrl = environment.get("SUMMERTSKATTEGRUNNLAG_API_URL");
 
             JsonApi jsonApiForBeregnetSkatt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forBeregnetSkatt(environment));

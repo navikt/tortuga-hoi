@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class AuthenticationFromEnv implements AuthenticationHeader {
 
-    private static final String beregnetSkattApiKey = "SKATT_API_KEY";
+    private static final String beregnetSkattApiKey = "BEREGNETSKATT_API_KEY";
     private static final String summertSkattegrunnlagApiKey = "SUMMERTSKATTEGRUNNLAG_API_KEY";
 
     private final String apiKey;
