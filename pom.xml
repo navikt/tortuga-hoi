@@ -25,9 +25,6 @@
         <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
 
         <mainClass>no.nav.opptjening.hoi.Application</mainClass>
-
-        <okhttp.version>3.12.1</okhttp.version>
-        <retrofit.version>2.5.0</retrofit.version>
     </properties>
 
     <repositories>
