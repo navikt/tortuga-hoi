@@ -16,7 +16,7 @@ public class JsonApi {
     private final HttpErrorHandler errorHandler;
     private final AuthenticationHeader authenticationHeader;
 
-    public JsonApi(HttpClient client, JsonDeserializer jsonDeserializer, HttpErrorHandler errorHandler, AuthenticationHeader authenticationHeader) {
+    JsonApi(HttpClient client, JsonDeserializer jsonDeserializer, HttpErrorHandler errorHandler, AuthenticationHeader authenticationHeader) {
         this.client = client;
         this.jsonDeserializer = jsonDeserializer;
         this.errorHandler = errorHandler;
@@ -63,7 +63,4 @@ public class JsonApi {
                 .uri(URI.create(endepunkt))
                 .build();
     }
-
-
-
 }

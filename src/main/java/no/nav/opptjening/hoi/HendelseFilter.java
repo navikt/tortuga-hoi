@@ -4,7 +4,7 @@ import io.prometheus.client.Counter;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 
-class HendelseFilter  {
+class HendelseFilter {
 
     private static final Counter inntektsHendelserRecievedTotal = Counter.build()
             .name("beregnet_skatt_hendelser_mottatt_totalt")
@@ -17,11 +17,11 @@ class HendelseFilter  {
 
     private static int earliestValidHendelseYear;
 
-    public HendelseFilter(String earliestValidHendelseYear) {
+    HendelseFilter(String earliestValidHendelseYear) {
         HendelseFilter.earliestValidHendelseYear = Integer.parseInt(earliestValidHendelseYear);
     }
 
-    public boolean testThatHendelseIsFromValidYear(HendelseKey key, Hendelse hendelse) {
+    boolean testThatHendelseIsFromValidYear(HendelseKey key, Hendelse hendelse) {
         inntektsHendelserRecievedTotal.inc();
         inntektsHendelserRecieved.labels(hendelse.getGjelderPeriode()).inc();
         return Integer.parseInt(key.getGjelderPeriode()) >= earliestValidHendelseYear;

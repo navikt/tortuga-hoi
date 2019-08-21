@@ -11,7 +11,7 @@ class ToStringAdapter<T> {
         this.wrappedObject = wrappedObject;
     }
 
-    static <T> Object of(T object, Function<T, String> toString){
+    static <T> Object of(T object, Function<T, String> toString) {
         return new ToStringAdapter<>(toString, object);
     }
 

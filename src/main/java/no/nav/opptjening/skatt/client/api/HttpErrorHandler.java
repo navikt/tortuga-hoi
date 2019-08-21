@@ -12,11 +12,11 @@ class HttpErrorHandler {
 
     private final JsonDeserializer jsonDeserializer;
 
-    public HttpErrorHandler(JsonDeserializer jsonDeserializer) {
+    HttpErrorHandler(JsonDeserializer jsonDeserializer) {
         this.jsonDeserializer = jsonDeserializer;
     }
 
-    public void handleError(HttpResponse<String> response) {
+    void handleError(HttpResponse<String> response) {
         handleSpecialCaseByApiErrorCode(response);
         handleSpecificStatusCodes(response);
         handleClassOfStatusCodes(response);
@@ -41,7 +41,7 @@ class HttpErrorHandler {
         try {
             var feil = jsonDeserializer.toObject(response.body(), FeilmeldingDto.class);
             if (feil != null && "BSA-006".equals(feil.getKode())) throw new FantIkkeBeregnetSkattException("");
-        } catch (ResponseUnmappableException e){
+        } catch (ResponseUnmappableException ignored) {
 
         }
     }

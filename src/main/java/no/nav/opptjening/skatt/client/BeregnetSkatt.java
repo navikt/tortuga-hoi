@@ -19,7 +19,7 @@ public final class BeregnetSkatt {
     public BeregnetSkatt(String personidentifikator, String inntektsaar,
                          Long personinntektLoenn, Long personinntektFiskeFangstFamiliebarnehage,
                          Long personinntektNaering, Long personinntektBarePensjonsdel,
-                         Long svalbardLoennLoennstrekkordningen,  Long svalbardPersoninntektNaering,
+                         Long svalbardLoennLoennstrekkordningen, Long svalbardPersoninntektNaering,
                          boolean skjermet) {
         this.personidentifikator = personidentifikator;
         this.inntektsaar = inntektsaar;
@@ -104,7 +104,7 @@ public final class BeregnetSkatt {
                 '}';
     }
 
-    public BeregnetSkatt withSvalbardLoenn(Long svalbardLoenn){
+    public BeregnetSkatt withSvalbardLoenn(Long svalbardLoenn) {
         return new BeregnetSkatt(
                 this.getPersonidentifikator(),
                 this.getInntektsaar(),

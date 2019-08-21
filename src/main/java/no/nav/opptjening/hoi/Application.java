@@ -62,7 +62,7 @@ public class Application {
         return streams.state().isRunning();
     }
 
-    public Application(Properties streamsConfig, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
+    Application(Properties streamsConfig, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
 
         StreamsBuilder builder = new StreamsBuilder();
         KStream<HendelseKey, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);

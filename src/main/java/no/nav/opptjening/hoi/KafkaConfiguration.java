@@ -14,21 +14,21 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KafkaConfiguration {
+class KafkaConfiguration {
 
-    public static final String SKATTEOPPGJØRHENDELSE_TOPIC = "privat-tortuga-skatteoppgjorhendelse";
-    public static final String PENSJONSGIVENDE_INNTEKT_TOPIC = "aapen-opptjening-pensjonsgivendeInntekt";
+    static final String SKATTEOPPGJØRHENDELSE_TOPIC = "privat-tortuga-skatteoppgjorhendelse";
+    static final String PENSJONSGIVENDE_INNTEKT_TOPIC = "aapen-opptjening-pensjonsgivendeInntekt";
 
     public static class Properties {
-        public static final String BOOTSTRAP_SERVERS = "KAFKA_BOOTSTRAP_SERVERS";
-        public static final String SCHEMA_REGISTRY_URL = "SCHEMA_REGISTRY_URL";
-        public static final String USERNAME = "KAFKA_USERNAME";
-        public static final String PASSWORD = "KAFKA_PASSWORD";
-        public static final String SASL_JAAS_CONFIG = "KAFKA_SASL_JAAS_CONFIG";
-        public static final String SASL_MECHANISM = "KAFKA_SASL_MECHANISM";
-        public static final String SECURITY_PROTOCOL = "KAFKA_SECURITY_PROTOCOL";
-        public static final String TRUSTSTORE_LOCATION = "KAFKA_SSL_TRUSTSTORE_LOCATION";
-        public static final String TRUSTSTORE_PASSWORD = "KAFKA_SSL_TRUSTSTORE_PASSWORD";
+        static final String BOOTSTRAP_SERVERS = "KAFKA_BOOTSTRAP_SERVERS";
+        static final String SCHEMA_REGISTRY_URL = "SCHEMA_REGISTRY_URL";
+        static final String USERNAME = "KAFKA_USERNAME";
+        static final String PASSWORD = "KAFKA_PASSWORD";
+        static final String SASL_JAAS_CONFIG = "KAFKA_SASL_JAAS_CONFIG";
+        static final String SASL_MECHANISM = "KAFKA_SASL_MECHANISM";
+        static final String SECURITY_PROTOCOL = "KAFKA_SECURITY_PROTOCOL";
+        static final String TRUSTSTORE_LOCATION = "KAFKA_SSL_TRUSTSTORE_LOCATION";
+        static final String TRUSTSTORE_PASSWORD = "KAFKA_SSL_TRUSTSTORE_PASSWORD";
     }
 
     private final String bootstrapServers;
@@ -41,7 +41,7 @@ public class KafkaConfiguration {
     private final String password;
     private final String username;
 
-    public KafkaConfiguration(Map<String, String> env) {
+    KafkaConfiguration(Map<String, String> env) {
         this.bootstrapServers = env.getOrDefault(Properties.BOOTSTRAP_SERVERS, "b27apvl00045.preprod.local:8443,b27apvl00046.preprod.local:8443,b27apvl00047.preprod.local:8443");
 
         this.schemaUrl = env.getOrDefault(Properties.SCHEMA_REGISTRY_URL, "http://kafka-schema-registry.tpa:8081");
@@ -100,7 +100,7 @@ public class KafkaConfiguration {
         return configs;
     }
 
-    public java.util.Properties streamsConfiguration() {
+    java.util.Properties streamsConfiguration() {
         Map<String, Object> configs = getCommonConfigs();
         final java.util.Properties streamsConfiguration = new java.util.Properties();
         streamsConfiguration.putAll(configs);

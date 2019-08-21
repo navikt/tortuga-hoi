@@ -28,15 +28,15 @@ public final class Feilmelding {
         return Objects.hash(kode, melding, korrelasjonsId);
     }
 
-    public String getKode() {
+    String getKode() {
         return kode;
     }
 
-    public String getMelding() {
+    String getMelding() {
         return melding;
     }
 
-    public String getKorrelasjonsId() {
+    String getKorrelasjonsId() {
         return korrelasjonsId;
     }
 

@@ -6,6 +6,7 @@ public class FantIkkeBeregnetSkattException extends NotFoundException {
     public FantIkkeBeregnetSkattException(String message) {
         this(message, null);
     }
+
     private FantIkkeBeregnetSkattException(String s, Throwable cause) {
         super(s, cause);
     }

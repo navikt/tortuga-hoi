@@ -72,7 +72,7 @@ class PensjonsgivendeInntektIT {
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        JsonApi jsonApi = JsonApiBuilder.createJsonApi(()->"foobar");
+        JsonApi jsonApi = JsonApiBuilder.createJsonApi(() -> "foobar");
         final BeregnetSkattClient client = new BeregnetSkattClient(null, "http://localhost:" + wireMockServer.port() + "/", jsonApi);
         final HendelseFilter hendelseFilter = new HendelseFilter("2017");
         final Application app = new Application(config, client, hendelseFilter);

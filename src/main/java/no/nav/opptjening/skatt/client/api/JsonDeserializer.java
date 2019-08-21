@@ -8,15 +8,15 @@ import java.io.IOException;
 class JsonDeserializer {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public JsonDeserializer() {
+    JsonDeserializer() {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
-   <T> T toObject(String jsonDocument, Class<T> clazz){
-       try {
-           return objectMapper.readValue(jsonDocument, clazz);
-       } catch (IOException e) {
-           throw new ResponseUnmappableException("Could not unmarshal JSON to " + clazz.getName(), e);
-       }
-   }
+    <T> T toObject(String jsonDocument, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(jsonDocument, clazz);
+        } catch (IOException e) {
+            throw new ResponseUnmappableException("Could not unmarshal JSON to " + clazz.getName(), e);
+        }
+    }
 }

@@ -27,7 +27,4 @@ public class AuthenticationFromEnv implements AuthenticationHeader {
     public String value() {
         return apiKey;
     }
-
-
-
 }

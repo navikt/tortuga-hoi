@@ -10,7 +10,6 @@ import org.apache.kafka.streams.kstream.ValueMapperWithKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hendelse, BeregnetSkatt> {
     private static final Logger LOG = LoggerFactory.getLogger(BeregnetSkattMapper.class);
     private final BeregnetSkattClient beregnetSkattClient;
@@ -24,7 +23,7 @@ class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hendelse, B
             .help("Antall hendelser prosessert").register();
 
 
-    public BeregnetSkattMapper(BeregnetSkattClient beregnetSkattClient) {
+    BeregnetSkattMapper(BeregnetSkattClient beregnetSkattClient) {
         this.beregnetSkattClient = beregnetSkattClient;
     }
 

@@ -8,7 +8,7 @@ public abstract class HttpException extends IllegalArgumentException {
         this(httpStatus, message, null);
     }
 
-    protected HttpException(int httpStatus, String message, Throwable cause) {
+    HttpException(int httpStatus, String message, Throwable cause) {
         super(message, cause);
         this.httpStatus = httpStatus;
     }

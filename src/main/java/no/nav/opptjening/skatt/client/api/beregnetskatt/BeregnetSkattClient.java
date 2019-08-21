@@ -7,8 +7,6 @@ import no.nav.opptjening.skatt.client.api.JsonApi;
 import java.util.Optional;
 
 public class BeregnetSkattClient {
-
-
     private final SvalbardApi svalbardApi;
     private final BeregnetSkattApi beregnetSkattApi;
 
@@ -20,8 +18,7 @@ public class BeregnetSkattClient {
     public BeregnetSkatt getBeregnetSkatt(String rettighetspakke, String inntektsaar, String personidentifikator) {
         var beregnetSkattUtenSvalbardLoennLoennstrekkordningen = new BeregnetSkattMapper().mapToBeregnetSkatt(beregnetSkattApi.getBeregnetSkatt(rettighetspakke, inntektsaar, personidentifikator));
 
-
-        if(svalbardLoennIkkeErFlyttetTilSummertSkattegrunnlag(inntektsaar))
+        if (svalbardLoennIkkeErFlyttetTilSummertSkattegrunnlag(inntektsaar))
             return beregnetSkattUtenSvalbardLoennLoennstrekkordningen;
 
         Optional<Long> svalbardLoenn = svalbardApi.fetchSvalbardLoennsInntekt(inntektsaar, personidentifikator);
