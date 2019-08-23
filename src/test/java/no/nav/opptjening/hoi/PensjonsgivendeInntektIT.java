@@ -3,7 +3,6 @@ package no.nav.opptjening.hoi;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.confluent.kafka.serializers.*;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import no.nav.common.KafkaEnvironment;
 import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
@@ -18,65 +17,57 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.streams.StreamsConfig;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static no.nav.opptjening.hoi.KafkaConfiguration.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PensjonsgivendeInntektIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(PensjonsgivendeInntektIT.class);
-
     private static final WireMockServer wireMockServer = new WireMockServer();
 
     private static final int NUMBER_OF_BROKERS = 3;
-    private static final List<String> TOPICS = Arrays.asList("privat-tortuga-skatteoppgjorhendelse", "aapen-opptjening-pensjonsgivendeInntekt");
-
-    private static KafkaEnvironment kafkaEnvironment;
-    private final Properties streamsConfiguration = new Properties();
+    private static final List<String> TOPICS = Arrays.asList(PENSJONSGIVENDE_INNTEKT_TOPIC, SKATTEOPPGJØRHENDELSE_TOPIC);
+    private static final String KAFKA_USERNAME = "srvTest";
+    private static final String KAFKA_PASSWORD = "opensourcedPassword";
 
     private Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
-    @BeforeEach
-    void setUp() {
+    private static Application app;
+    private static KafkaEnvironment kafkaEnvironment;
+
+    @BeforeAll
+    static void setUp() {
         wireMockServer.start();
         kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, Collections.emptyList(), true, false, Collections.emptyList(), false, new Properties());
         kafkaEnvironment.start();
-
-        streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaEnvironment.getBrokersURL());
-        streamsConfiguration.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaEnvironment.getSchemaRegistry().getUrl());
+        KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(testEnvironment());
+        app = new Application(kafkaConfiguration, beregnetSkattClient(), new HendelseFilter("2017"));
     }
 
-    @AfterEach
-    void tearDown() {
+    private static BeregnetSkattClient beregnetSkattClient() {
+        JsonApi jsonApi = JsonApiBuilder.createJsonApi(() -> "foobar");
+        return new BeregnetSkattClient(null, "http://localhost:" + wireMockServer.port() + "/", jsonApi);
+    }
+
+    @AfterAll
+    static void tearDown() {
         kafkaEnvironment.tearDown();
         wireMockServer.stop();
     }
 
     @Test
-    void kafkaStreamProcessesCorrectRecordsAndProducesOnNewTopic() throws Exception {
-        final Properties config = (Properties) streamsConfiguration.clone();
-
-        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tortuga-hoi-streams");
-        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
-        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        JsonApi jsonApi = JsonApiBuilder.createJsonApi(() -> "foobar");
-        final BeregnetSkattClient client = new BeregnetSkattClient(null, "http://localhost:" + wireMockServer.port() + "/", jsonApi);
-        final HendelseFilter hendelseFilter = new HendelseFilter("2017");
-        final Application app = new Application(config, client, hendelseFilter);
-
+    void application_reads_messages_from_topic_then_sends_filtered_messages_to_another_topic() throws Exception {
         createTestRecords();
         createMockApi();
 
@@ -94,6 +85,17 @@ class PensjonsgivendeInntektIT {
             t1.interrupt();
             app.shutdown();
         }
+    }
+
+    private static Map<String, String> testEnvironment() {
+        Map<String, String> testEnvironment = new HashMap<>();
+        testEnvironment.put("KAFKA_BOOTSTRAP_SERVERS", kafkaEnvironment.getBrokersURL());
+        testEnvironment.put("SCHEMA_REGISTRY_URL", kafkaEnvironment.getSchemaRegistry().getUrl());
+        testEnvironment.put("KAFKA_USERNAME", KAFKA_USERNAME);
+        testEnvironment.put("KAFKA_PASSWORD", KAFKA_PASSWORD);
+        testEnvironment.put("KAFKA_SASL_MECHANISM", "PLAIN");
+        testEnvironment.put("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT");
+        return testEnvironment;
     }
 
     private void createTestRecords() {

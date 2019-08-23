@@ -13,81 +13,84 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.Properties;
+import static java.lang.System.*;
+import static no.nav.opptjening.hoi.ApplicationProperties.*;
 
 public class Application {
 
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
-    private final KafkaStreams streams;
+    private final KafkaStreams beregnetSkattStream;
 
     public static void main(String[] args) {
-        Map<String, String> environment = System.getenv();
-
         try {
-            KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(environment);
-            Properties streamsConfig = kafkaConfiguration.streamsConfiguration();
-            String beregnetSkattUrl = environment.get("BEREGNETSKATT_API_URL");
-            String summertskattApiUrl = environment.get("SUMMERTSKATTEGRUNNLAG_API_URL");
-
-            JsonApi jsonApiForBeregnetSkatt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forBeregnetSkatt(environment));
-            JsonApi jsonApiForSvalbardinntekt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forSummertSkatt(environment));
-            SvalbardApi svalbardApi = new SvalbardApi(summertskattApiUrl, jsonApiForSvalbardinntekt);
-            final BeregnetSkattClient beregnetSkattClient = new BeregnetSkattClient(svalbardApi, beregnetSkattUrl, jsonApiForBeregnetSkatt);
-
-            String earliestValidHendelseYear = environment.get("EARLIEST_VALID_HENDELSE_YEAR");
-            final HendelseFilter hendelseFilter = new HendelseFilter(earliestValidHendelseYear);
-
-            final Application app = new Application(streamsConfig, beregnetSkattClient, hendelseFilter);
+            final Application app = new Application(new KafkaConfiguration(getenv()), beregnetSkattClient(), hendelseFilter());
             app.start();
 
             final NaisHttpServer naisHttpServer = new NaisHttpServer(app::isRunning, () -> true);
             naisHttpServer.start();
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                try {
-                    LOG.info("stopping nais http server");
-                    naisHttpServer.stop();
-                } catch (Exception e) {
-                    LOG.error("Error while shutting down nais http server", e);
-                }
-            }));
+            addShutdownHook(naisHttpServer);
 
         } catch (Exception e) {
             LOG.error("Application failed to start", e);
-            System.exit(1);
+            exit(1);
         }
     }
 
-    private boolean isRunning() {
-        return streams.state().isRunning();
-    }
+    Application(KafkaConfiguration kafkaConfiguration, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
 
-    Application(Properties streamsConfig, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
-
-        StreamsBuilder builder = new StreamsBuilder();
-        KStream<HendelseKey, Hendelse> stream = builder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
+        StreamsBuilder streamBuilder = new StreamsBuilder();
+        KStream<HendelseKey, Hendelse> stream = streamBuilder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
         stream.filter(hendelseFilter::testThatHendelseIsFromValidYear)
                 .mapValues(new BeregnetSkattMapper(beregnetSkattClient))
                 .mapValues(new PensjonsgivendeInntektMapper())
                 .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
 
-        streams = new KafkaStreams(builder.build(), streamsConfig);
-        streams.setUncaughtExceptionHandler((t, e) -> {
-            LOG.error("Uncaught exception in thread {}, closing streams", t, e);
-            streams.close();
+        beregnetSkattStream = new KafkaStreams(streamBuilder.build(), kafkaConfiguration.streamsConfiguration());
+        beregnetSkattStream.setUncaughtExceptionHandler((t, e) -> {
+            LOG.error("Uncaught exception in thread {}, closing beregnetSkattStream", t, e);
+            beregnetSkattStream.close();
         });
-        streams.setStateListener((newState, oldState) ->
-            LOG.debug("State change from {} to {}", oldState, newState)
+        beregnetSkattStream.setStateListener((newState, oldState) ->
+                LOG.debug("State change from {} to {}", oldState, newState)
         );
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
-    public void start() {
-        streams.start();
+    private static HendelseFilter hendelseFilter() {
+        String earliestValidHendelseYear = getFromEnvironment(getenv(), "EARLIEST_VALID_HENDELSE_YEAR");
+        return new HendelseFilter(earliestValidHendelseYear);
     }
 
-    public void shutdown() {
-        streams.close();
+    private static BeregnetSkattClient beregnetSkattClient() {
+        String beregnetSkattUrl = getFromEnvironment(getenv(), "BEREGNETSKATT_API_URL");
+        String summertskattApiUrl = getFromEnvironment(getenv(), "SUMMERTSKATTEGRUNNLAG_API_URL");
+        JsonApi jsonApiForBeregnetSkatt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forBeregnetSkatt(getenv()));
+        JsonApi jsonApiForSvalbardinntekt = JsonApiBuilder.createJsonApi(AuthenticationFromEnv.forSummertSkatt(getenv()));
+        SvalbardApi svalbardApi = new SvalbardApi(summertskattApiUrl, jsonApiForSvalbardinntekt);
+        return new BeregnetSkattClient(svalbardApi, beregnetSkattUrl, jsonApiForBeregnetSkatt);
+    }
+
+    private static void addShutdownHook(NaisHttpServer naisHttpServer) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                LOG.info("stopping nais http server");
+                naisHttpServer.stop();
+            } catch (Exception e) {
+                LOG.error("Error while shutting down nais http server", e);
+            }
+        }));
+    }
+
+    private boolean isRunning() {
+        return beregnetSkattStream.state().isRunning();
+    }
+
+    void start() {
+        beregnetSkattStream.start();
+    }
+
+    void shutdown() {
+        beregnetSkattStream.close();
     }
 }
