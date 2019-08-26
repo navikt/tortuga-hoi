@@ -18,6 +18,7 @@ class MockApi {
     static int port() {
         return wireMockServer.port();
     }
+
     private static MappingBuilder buildMappingBuilder(String testUrl) {
         return WireMock.get(WireMock.urlPathEqualTo(testUrl))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"));
