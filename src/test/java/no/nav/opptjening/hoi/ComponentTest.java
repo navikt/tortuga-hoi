@@ -31,16 +31,16 @@ import static no.nav.opptjening.hoi.KafkaConfiguration.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class PensjonsgivendeInntektIT {
+class ComponentTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PensjonsgivendeInntektIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ComponentTest.class);
     private static final WireMockServer wireMockServer = new WireMockServer();
 
     private static final int NUMBER_OF_BROKERS = 3;
     private static final List<String> TOPICS = Arrays.asList(PENSJONSGIVENDE_INNTEKT_TOPIC, SKATTEOPPGJØRHENDELSE_TOPIC);
     private static final String KAFKA_USERNAME = "srvTest";
     private static final String KAFKA_PASSWORD = "opensourcedPassword";
-    public static final String EARLIEST_VALID_HENDELSE_YEAR = "2017";
+    private static final String EARLIEST_VALID_HENDELSE_YEAR = "2017";
 
     private Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
@@ -70,7 +70,7 @@ class PensjonsgivendeInntektIT {
     @Test
     void application_reads_messages_from_topic_then_sends_filtered_messages_to_another_topic() throws Exception {
         createTestRecords();
-        createMockApi();
+        MockApi.initBeregnetSkatt();
 
         CountDownLatch expectedProducedRecordsCount = new CountDownLatch(6);
 
