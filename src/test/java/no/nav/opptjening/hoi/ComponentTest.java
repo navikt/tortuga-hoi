@@ -40,6 +40,7 @@ class PensjonsgivendeInntektIT {
     private static final List<String> TOPICS = Arrays.asList(PENSJONSGIVENDE_INNTEKT_TOPIC, SKATTEOPPGJØRHENDELSE_TOPIC);
     private static final String KAFKA_USERNAME = "srvTest";
     private static final String KAFKA_PASSWORD = "opensourcedPassword";
+    public static final String EARLIEST_VALID_HENDELSE_YEAR = "2017";
 
     private Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
@@ -52,7 +53,7 @@ class PensjonsgivendeInntektIT {
         kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, Collections.emptyList(), true, false, Collections.emptyList(), false, new Properties());
         kafkaEnvironment.start();
         KafkaConfiguration kafkaConfiguration = new KafkaConfiguration(testEnvironment());
-        app = new Application(kafkaConfiguration, beregnetSkattClient(), new HendelseFilter("2017"));
+        app = new Application(kafkaConfiguration, beregnetSkattClient(), new HendelseFilter(EARLIEST_VALID_HENDELSE_YEAR));
     }
 
     private static BeregnetSkattClient beregnetSkattClient() {
