@@ -109,7 +109,7 @@
         <dependency>
             <groupId>no.nav.opptjening</groupId>
             <artifactId>nais-support</artifactId>
-            <version>16</version>
+            <version>19</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
