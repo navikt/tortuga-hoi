@@ -1,26 +1,21 @@
 package no.nav.opptjening.hoi;
 
 import no.nav.opptjening.nais.NaisHttpServer;
-import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
-import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import no.nav.opptjening.skatt.client.api.JsonApi;
 import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.SvalbardApi;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.KStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.lang.System.*;
-import static no.nav.opptjening.hoi.ApplicationProperties.*;
+import static java.lang.System.exit;
+import static java.lang.System.getenv;
+import static no.nav.opptjening.hoi.ApplicationProperties.getFromEnvironment;
 
 public class Application {
 
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
-    private final KafkaStreams beregnetSkattStream;
-    private static final StreamsBuilder streamBuilder = new StreamsBuilder();
+    private final BeregnetSkattStream beregnetSkattStream;
 
     public static void main(String[] args) {
         try {
@@ -38,31 +33,8 @@ public class Application {
     }
 
     Application(KafkaConfiguration kafkaConfiguration, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
-        beregnetSkattStream = buildBeregnetSkattStream(beregnetSkattClient, hendelseFilter, kafkaConfiguration);
-        setStreamUncaughtExceptionHandler();
-        setStreamStateListener();
+        beregnetSkattStream = new BeregnetSkattStream(beregnetSkattClient, hendelseFilter, kafkaConfiguration);
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-    }
-
-    private KafkaStreams buildBeregnetSkattStream(BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter, KafkaConfiguration kafkaConfiguration) {
-        KStream<HendelseKey, Hendelse> stream = streamBuilder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
-        stream.filter(hendelseFilter::testThatHendelseIsFromValidYear)
-                .mapValues(new BeregnetSkattMapper(beregnetSkattClient))
-                .mapValues(new PensjonsgivendeInntektMapper())
-                .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
-        return new KafkaStreams(streamBuilder.build(), kafkaConfiguration.streamsConfiguration());
-    }
-
-    private void setStreamUncaughtExceptionHandler() {
-        beregnetSkattStream.setUncaughtExceptionHandler((t, e) -> {
-            LOG.error("Uncaught exception in thread {}, closing beregnetSkattStream", t, e);
-            beregnetSkattStream.close();
-        });
-    }
-
-    private void setStreamStateListener() {
-        beregnetSkattStream.setStateListener((newState, oldState) ->
-                LOG.debug("State change from {} to {}", oldState, newState));
     }
 
     private static HendelseFilter hendelseFilter() {
@@ -91,7 +63,7 @@ public class Application {
     }
 
     private boolean isRunning() {
-        return beregnetSkattStream.state().isRunning();
+        return beregnetSkattStream.isRunning();
     }
 
     void start() {
