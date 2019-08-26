@@ -46,15 +46,22 @@ public class Application {
                 .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
 
         beregnetSkattStream = new KafkaStreams(streamBuilder.build(), kafkaConfiguration.streamsConfiguration());
+        setStreamUncaughtExceptionHandler();
+        setStreamStateListener();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    private void setStreamUncaughtExceptionHandler() {
         beregnetSkattStream.setUncaughtExceptionHandler((t, e) -> {
             LOG.error("Uncaught exception in thread {}, closing beregnetSkattStream", t, e);
             beregnetSkattStream.close();
         });
-        beregnetSkattStream.setStateListener((newState, oldState) ->
-                LOG.debug("State change from {} to {}", oldState, newState)
-        );
+    }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    private void setStreamStateListener() {
+        beregnetSkattStream.setStateListener((newState, oldState) ->
+                LOG.debug("State change from {} to {}", oldState, newState));
     }
 
     private static HendelseFilter hendelseFilter() {
