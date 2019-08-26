@@ -9,15 +9,18 @@ import no.nav.opptjening.schema.PensjonsgivendeInntekt;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.schema.skatt.hendelsesliste.HendelseKey;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 import static no.nav.opptjening.hoi.KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC;
 import static no.nav.opptjening.hoi.KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC;
@@ -28,27 +31,29 @@ class KafkaTestEnvironment {
     private static final List<String> TOPICS = Arrays.asList(PENSJONSGIVENDE_INNTEKT_TOPIC, SKATTEOPPGJØRHENDELSE_TOPIC);
     private static final String RECORD_TOPIC = "privat-tortuga-skatteoppgjorhendelse";
     private static final int NUMBER_OF_BROKERS = 3;
+    private static final Logger LOG = LoggerFactory.getLogger(ComponentTest.class);
 
     private static KafkaEnvironment kafkaEnvironment;
+    private static Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
-    static void setup(){
+    static void setup() {
         kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, Collections.emptyList(), true, false, Collections.emptyList(), false, new Properties());
         kafkaEnvironment.start();
     }
 
-    static void tearDown(){
+    static void tearDown() {
         kafkaEnvironment.tearDown();
     }
 
-    private static String getBrokersURL(){
+    private static String getBrokersURL() {
         return kafkaEnvironment.getBrokersURL();
     }
 
-    private static String getSchemaRegistryUrl(){
+    private static String getSchemaRegistryUrl() {
         return Objects.requireNonNull(kafkaEnvironment.getSchemaRegistry()).getUrl();
     }
 
-    static KafkaConfiguration getKafkaConfiguration(){
+    static KafkaConfiguration getKafkaConfiguration() {
         return new KafkaConfiguration(getTestEnvironment());
     }
 
@@ -63,7 +68,7 @@ class KafkaTestEnvironment {
         return testEnvironment;
     }
 
-    private static List<Hendelse> getHendelser(){
+    private static List<Hendelse> getHendelser() {
         List<Hendelse> hendelser = new LinkedList<>();
         hendelser.add(new Hendelse(1L, "01029804032", "2017"));
         hendelser.add(new Hendelse(2L, "04057849687", "2017"));
@@ -81,14 +86,14 @@ class KafkaTestEnvironment {
         return hendelser;
     }
 
-    private static Map<String, Object> getRecordConfig(){
+    private static Map<String, Object> getRecordConfig() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, getBrokersURL());
         configs.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, getSchemaRegistryUrl());
         return configs;
     }
 
-    private static KafkaProducer<HendelseKey, Hendelse> getKafkaProducer(Map<String, Object> configs){
+    private static KafkaProducer<HendelseKey, Hendelse> getKafkaProducer(Map<String, Object> configs) {
         Map<String, Object> producerConfig = new HashMap<>(configs);
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
@@ -98,7 +103,7 @@ class KafkaTestEnvironment {
 
     }
 
-    private static KafkaConsumer<HendelseKey, PensjonsgivendeInntekt> getKafkaConsumer(Map<String, Object> configs){
+    private static KafkaConsumer<HendelseKey, PensjonsgivendeInntekt> getKafkaConsumer(Map<String, Object> configs) {
         Map<String, Object> consumerConfigs = new HashMap<>(configs);
         consumerConfigs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
         consumerConfigs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
@@ -109,18 +114,34 @@ class KafkaTestEnvironment {
         return new KafkaConsumer<>(consumerConfigs);
     }
 
-    private static ProducerRecord<HendelseKey, Hendelse> createRecord(Hendelse hendelse){
+    private static ProducerRecord<HendelseKey, Hendelse> createRecord(Hendelse hendelse) {
         return new ProducerRecord<>(RECORD_TOPIC, HendelseKey.newBuilder()
                 .setIdentifikator(hendelse.getIdentifikator())
                 .setGjelderPeriode(hendelse.getGjelderPeriode()).build(), hendelse);
     }
 
-    static Consumer<HendelseKey, PensjonsgivendeInntekt> createRecords() {
+    static void createRecords() {
         Map<String, Object> configs = getRecordConfig();
         Producer<HendelseKey, Hendelse> producer = getKafkaProducer(configs);
-        Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer = getKafkaConsumer(configs);
+        pensjonsgivendeInntektConsumer = getKafkaConsumer(configs);
 
         getHendelser().stream().map(KafkaTestEnvironment::createRecord).forEach(producer::send);
-        return pensjonsgivendeInntektConsumer;
+    }
+
+
+    static void pensjonsgivendeInntektConsumerThread(CountDownLatch latch) {
+        pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
+        try {
+            while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
+                ConsumerRecords<HendelseKey, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(Duration.ofSeconds(5L));
+
+                for (ConsumerRecord<HendelseKey, PensjonsgivendeInntekt> record : consumerRecords) {
+                    LOG.info("Received record = {}", record);
+                    latch.countDown();
+                }
+            }
+        } catch (KafkaException e) {
+            LOG.error("Error while polling records", e);
+        }
     }
 }

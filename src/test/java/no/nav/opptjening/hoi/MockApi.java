@@ -1,9 +1,23 @@
 package no.nav.opptjening.hoi;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 class MockApi {
+    private static final WireMockServer wireMockServer = new WireMockServer();
+
+    static void start() {
+        wireMockServer.start();
+    }
+
+    static void stop() {
+        wireMockServer.stop();
+    }
+
+    static int port() {
+        return wireMockServer.port();
+    }
     private static MappingBuilder buildMappingBuilder(String testUrl) {
         return WireMock.get(WireMock.urlPathEqualTo(testUrl))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"));
