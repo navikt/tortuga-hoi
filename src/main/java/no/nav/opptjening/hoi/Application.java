@@ -20,6 +20,7 @@ public class Application {
 
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
     private final KafkaStreams beregnetSkattStream;
+    private static final StreamsBuilder streamBuilder = new StreamsBuilder();
 
     public static void main(String[] args) {
         try {
@@ -37,19 +38,19 @@ public class Application {
     }
 
     Application(KafkaConfiguration kafkaConfiguration, BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter) {
+        beregnetSkattStream = buildBeregnetSkattStream(beregnetSkattClient, hendelseFilter, kafkaConfiguration);
+        setStreamUncaughtExceptionHandler();
+        setStreamStateListener();
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
 
-        StreamsBuilder streamBuilder = new StreamsBuilder();
+    private KafkaStreams buildBeregnetSkattStream(BeregnetSkattClient beregnetSkattClient, HendelseFilter hendelseFilter, KafkaConfiguration kafkaConfiguration) {
         KStream<HendelseKey, Hendelse> stream = streamBuilder.stream(KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TOPIC);
         stream.filter(hendelseFilter::testThatHendelseIsFromValidYear)
                 .mapValues(new BeregnetSkattMapper(beregnetSkattClient))
                 .mapValues(new PensjonsgivendeInntektMapper())
                 .to(KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC);
-
-        beregnetSkattStream = new KafkaStreams(streamBuilder.build(), kafkaConfiguration.streamsConfiguration());
-        setStreamUncaughtExceptionHandler();
-        setStreamStateListener();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+        return new KafkaStreams(streamBuilder.build(), kafkaConfiguration.streamsConfiguration());
     }
 
     private void setStreamUncaughtExceptionHandler() {
