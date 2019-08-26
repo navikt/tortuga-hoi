@@ -25,8 +25,9 @@ import static no.nav.opptjening.hoi.KafkaConfiguration.SKATTEOPPGJØRHENDELSE_TO
 class KafkaTestEnvironment {
     private static final String KAFKA_USERNAME = "srvTest";
     private static final String KAFKA_PASSWORD = "opensourcedPassword";
-    private static final int NUMBER_OF_BROKERS = 3;
     private static final List<String> TOPICS = Arrays.asList(PENSJONSGIVENDE_INNTEKT_TOPIC, SKATTEOPPGJØRHENDELSE_TOPIC);
+    private static final String RECORD_TOPIC = "privat-tortuga-skatteoppgjorhendelse";
+    private static final int NUMBER_OF_BROKERS = 3;
 
     private static KafkaEnvironment kafkaEnvironment;
 
@@ -108,18 +109,18 @@ class KafkaTestEnvironment {
         return new KafkaConsumer<>(consumerConfigs);
     }
 
+    private static ProducerRecord<HendelseKey, Hendelse> createRecord(Hendelse hendelse){
+        return new ProducerRecord<>(RECORD_TOPIC, HendelseKey.newBuilder()
+                .setIdentifikator(hendelse.getIdentifikator())
+                .setGjelderPeriode(hendelse.getGjelderPeriode()).build(), hendelse);
+    }
+
     static Consumer<HendelseKey, PensjonsgivendeInntekt> createRecords() {
         Map<String, Object> configs = getRecordConfig();
         Producer<HendelseKey, Hendelse> producer = getKafkaProducer(configs);
         Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer = getKafkaConsumer(configs);
 
-        final String topic = "privat-tortuga-skatteoppgjorhendelse";
-        for (Hendelse hendelse : getHendelser()) {
-            producer.send(new ProducerRecord<>(topic, HendelseKey.newBuilder()
-                    .setIdentifikator(hendelse.getIdentifikator())
-                    .setGjelderPeriode(hendelse.getGjelderPeriode()).build(), hendelse));
-        }
-        producer.flush();
+        getHendelser().stream().map(KafkaTestEnvironment::createRecord).forEach(producer::send);
         return pensjonsgivendeInntektConsumer;
     }
 }
