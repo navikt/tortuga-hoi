@@ -15,9 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ComponentTest {
 
-
     private static final String EARLIEST_VALID_HENDELSE_YEAR = "2017";
-
 
     private static Application app;
 
@@ -45,7 +43,7 @@ class ComponentTest {
         KafkaTestEnvironment.createRecords();
         MockApi.initBeregnetSkatt();
 
-        CountDownLatch expectedProducedRecordsCount = new CountDownLatch(6);
+        CountDownLatch expectedProducedRecordsCount = new CountDownLatch(2);
 
         Thread t1 = new Thread(() -> KafkaTestEnvironment.pensjonsgivendeInntektConsumerThread(expectedProducedRecordsCount));
 
