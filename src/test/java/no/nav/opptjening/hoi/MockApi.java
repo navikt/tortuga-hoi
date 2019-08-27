@@ -24,7 +24,7 @@ class MockApi {
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("foobar"));
     }
 
-    static void initBeregnetSkatt() {
+    static void setUpBeregnetSkattStubs() {
         WireMock.stubFor(buildMappingBuilder("/nav/2017/01029804032")
                 .willReturn(WireMock.okJson("{\n" +
                         "  \"personidentifikator\": \"01029804032\",\n" +
