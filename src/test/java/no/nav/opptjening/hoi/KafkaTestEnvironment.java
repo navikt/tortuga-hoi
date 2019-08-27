@@ -131,14 +131,15 @@ class KafkaTestEnvironment {
 
     static void pensjonsgivendeInntektConsumerThread(CountDownLatch latch) {
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
+        Duration duration = Duration.ofSeconds(5L);
         try {
             while (!Thread.currentThread().isInterrupted() && latch.getCount() > 0) {
-                ConsumerRecords<HendelseKey, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(Duration.ofSeconds(5L));
+                ConsumerRecords<HendelseKey, PensjonsgivendeInntekt> consumerRecords = pensjonsgivendeInntektConsumer.poll(duration);
 
-                for (ConsumerRecord<HendelseKey, PensjonsgivendeInntekt> record : consumerRecords) {
+                consumerRecords.forEach(record -> {
                     LOG.info("Received record = {}", record);
                     latch.countDown();
-                }
+                });
             }
         } catch (KafkaException e) {
             LOG.error("Error while polling records", e);
