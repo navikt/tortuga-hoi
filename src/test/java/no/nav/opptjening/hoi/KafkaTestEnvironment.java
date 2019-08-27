@@ -33,12 +33,13 @@ class KafkaTestEnvironment {
     private static final int NUMBER_OF_BROKERS = 3;
     private static final Logger LOG = LoggerFactory.getLogger(ComponentTest.class);
 
+    private static Map<String, Object> configs;
     private static KafkaEnvironment kafkaEnvironment;
-    private static Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer;
 
     static void setup() {
         kafkaEnvironment = new KafkaEnvironment(NUMBER_OF_BROKERS, TOPICS, Collections.emptyList(), true, false, Collections.emptyList(), false, new Properties());
         kafkaEnvironment.start();
+        configs = getCommonConfig();
     }
 
     static void tearDown() {
@@ -71,29 +72,20 @@ class KafkaTestEnvironment {
     private static List<Hendelse> getHendelser() {
         List<Hendelse> hendelser = new LinkedList<>();
         hendelser.add(new Hendelse(1L, "01029804032", "2017"));
-        hendelser.add(new Hendelse(2L, "04057849687", "2017"));
-        hendelser.add(new Hendelse(3L, "09038800237", "2017"));
-        hendelser.add(new Hendelse(4L, "01029413157", "2017"));
-        hendelser.add(new Hendelse(5L, "10026300407", "2017"));
-        hendelser.add(new Hendelse(6L, "10016000383", "2017"));
         hendelser.add(new Hendelse(7L, "04063100264", "2016"));
-        hendelser.add(new Hendelse(8L, "04116500200", "2016"));
-        hendelser.add(new Hendelse(9L, "04126200248", "2016"));
-        hendelser.add(new Hendelse(10L, "04063100264", "2015"));
-        hendelser.add(new Hendelse(11L, "04116500200", "2015"));
-        hendelser.add(new Hendelse(12L, "04126200248", "2015"));
-        hendelser.add(new Hendelse(13L, "11987654321", "2017"));
+        hendelser.add(new Hendelse(50L, "04063100264", "2015"));
+        hendelser.add(new Hendelse(133L, "11987654321", "2018"));
         return hendelser;
     }
 
-    private static Map<String, Object> getRecordConfig() {
+    private static Map<String, Object> getCommonConfig() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, getBrokersURL());
         configs.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, getSchemaRegistryUrl());
         return configs;
     }
 
-    private static KafkaProducer<HendelseKey, Hendelse> getKafkaProducer(Map<String, Object> configs) {
+    private static KafkaProducer<HendelseKey, Hendelse> getKafkaProducer() {
         Map<String, Object> producerConfig = new HashMap<>(configs);
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
@@ -103,7 +95,7 @@ class KafkaTestEnvironment {
 
     }
 
-    private static KafkaConsumer<HendelseKey, PensjonsgivendeInntekt> getKafkaConsumer(Map<String, Object> configs) {
+    private static KafkaConsumer<HendelseKey, PensjonsgivendeInntekt> getKafkaConsumer() {
         Map<String, Object> consumerConfigs = new HashMap<>(configs);
         consumerConfigs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
         consumerConfigs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
@@ -121,15 +113,14 @@ class KafkaTestEnvironment {
     }
 
     static void createRecords() {
-        Map<String, Object> configs = getRecordConfig();
-        Producer<HendelseKey, Hendelse> producer = getKafkaProducer(configs);
-        pensjonsgivendeInntektConsumer = getKafkaConsumer(configs);
-
+        Producer<HendelseKey, Hendelse> producer = getKafkaProducer();
         getHendelser().stream().map(KafkaTestEnvironment::createRecord).forEach(producer::send);
     }
 
 
     static void pensjonsgivendeInntektConsumerThread(CountDownLatch latch) {
+        Consumer<HendelseKey, PensjonsgivendeInntekt> pensjonsgivendeInntektConsumer = getKafkaConsumer();
+
         pensjonsgivendeInntektConsumer.subscribe(Collections.singletonList("aapen-opptjening-pensjonsgivendeInntekt"));
         Duration duration = Duration.ofSeconds(5L);
         try {
