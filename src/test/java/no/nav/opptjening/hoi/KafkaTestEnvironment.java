@@ -42,10 +42,6 @@ class KafkaTestEnvironment {
         configs = getCommonConfig();
     }
 
-    static void tearDown() {
-        kafkaEnvironment.tearDown();
-    }
-
     private static String getBrokersURL() {
         return kafkaEnvironment.getBrokersURL();
     }

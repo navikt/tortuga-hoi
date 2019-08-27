@@ -34,7 +34,6 @@ class ComponentTest {
 
     @AfterAll
     static void tearDown() {
-        KafkaTestEnvironment.tearDown();
         MockApi.stop();
     }
 
