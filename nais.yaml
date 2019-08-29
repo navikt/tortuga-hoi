@@ -1,40 +1,30 @@
-name: tortuga-hoi
-image: repo.adeo.no:5443/tortuga-hoi
-team: teampeon
-replicas:
-  min: 20
-  max: 20
-resources:
-  limits:
-    cpu: 1000m
-    memory: 384Mi
-  requests:
-    cpu: 100m
-    memory: 256Mi
-prometheus:
-  enabled: true
-fasitResources:
-  used:
-    - alias: tortuga-hoi-properties
-      resourceType: applicationproperties
-    - alias: eksternapp.skatt.datasamarbeid.api.beregnetskatt
-      resourceType: restservice
-      propertyMap:
-        url: BEREGNETSKATT_API_URL
-    - alias: eksternapp.skatt.datasamarbeid.api.summertskattegrunnlag
-      resourceType: restservice
-      propertyMap:
-        url: SUMMERTSKATTEGRUNNLAG_API_URL
-    - alias: srvtortuga-hoi
-      resourceType: credential
-      propertyMap:
-        username: KAFKA_USERNAME
-        password: KAFKA_PASSWORD
-    - alias: tortuga-hoi-eksternapp.skatt.datasamarbeid.api.beregnetskatt-apiKey
-      resourceType: credential
-      propertyMap:
-        password: BEREGNETSKATT_API_KEY
-    - alias: tortuga-hoi-eksternapp.skatt.datasamarbeid.api.summertskattegrunnlag-apiKey
-      resourceType: credential
-      propertyMap:
-        password: SUMMERTSKATTEGRUNNLAG_API_KEY
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: tortuga-hoi
+  namespace: {{namespace}}
+  labels:
+    team: teampeon
+spec:
+  image: repo.adeo.no:5443/tortuga-hoi:{{version}}
+  port: 8080
+  ingresses:
+    - {{ingress}}
+  liveness:
+    path: isAlive
+  readiness:
+    path: isReady
+  replicas:
+    min: 20
+    max: 20
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 384Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  vault:
+    enabled: true
+  prometheus:
+    enabled: true
