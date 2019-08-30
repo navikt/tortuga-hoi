@@ -3,9 +3,7 @@ package no.nav.opptjening.hoi;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -20,12 +18,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class ComponentTest {
 
     private static final String EARLIEST_VALID_HENDELSE_YEAR = "2017";
+    private static final String INVALID_HENDELSE_YEAR = "2016";
 
     @BeforeAll
     static void setUp() {
         MockApi.start();
         KafkaTestEnvironment.setup();
         new Application(getKafkaConfiguration(), beregnetSkattClient(), new HendelseFilter(EARLIEST_VALID_HENDELSE_YEAR)).start();
+        KafkaTestEnvironment.createConsumer();
     }
 
     private static BeregnetSkattClient beregnetSkattClient() {
@@ -38,13 +38,13 @@ class ComponentTest {
     }
 
     @Test
-    void application_reads_messages_from_topic_then_sends_filtered_messages_to_another_topic() {
+    void application_reads_messages_from_hendelse_topic_then_sends_filtered_messages_to_pensjonsgivende_inntekt_topic() {
         setUpBeregnetSkattStubs();
 
         var hendelser = asList(
                 new Hendelse(1L, "01029804032", "2017"),
-                new Hendelse(7L, "12412512533", "2016"),
-                new Hendelse(50L, "12412513568", "2015"),
+                new Hendelse(7L, "12412512533", INVALID_HENDELSE_YEAR),
+                new Hendelse(50L, "12412513568", INVALID_HENDELSE_YEAR),
                 new Hendelse(133L, "11987654321", "2018")
         );
         populateHendelseTopic(hendelser);
@@ -58,5 +58,17 @@ class ComponentTest {
         assertNotNull(consumerRecordValues.get(0));
         assertEquals(consumerRecordKeys.get(1).getIdentifikator(), hendelser.get(3).getIdentifikator());
         assertNull(consumerRecordValues.get(1));
+    }
+
+    @Test
+    void application_filters_out_hendelser_from_invalid_year() {
+        setUpBeregnetSkattStubs();
+
+        var hendelser = asList(
+                new Hendelse(7L, "12412512533", INVALID_HENDELSE_YEAR),
+                new Hendelse(50L, "12412513568", INVALID_HENDELSE_YEAR)
+        );
+        populateHendelseTopic(hendelser);
+        assertTrue(getConsumerRecords().isEmpty());
     }
 }
