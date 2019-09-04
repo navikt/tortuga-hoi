@@ -154,6 +154,43 @@ class BeregnetSkattClientTest {
         }
     }
 
+
+    @Test
+    void when_ResponseFailedWithBadGatawayThenRetry() {
+        String jsonBody = "{\n" +
+                "    \"personidentifikator\": \"12345678901\",\n" +
+                "    \"inntektsaar\": \"2016\",\n" +
+                "    \"personinntektLoenn\": 490000,\n" +
+                "    \"personinntektFiskeFangstFamiliebarnehage\": 90000,\n" +
+                "    \"personinntektNaering\": 70000,\n" +
+                "    \"personinntektBarePensjonsdel\": 40000,\n" +
+                "    \"svalbardLoennLoennstrekkordningen\": 123456,\n" +
+                "    \"svalbardPersoninntektNaering\": 123456\n" +
+                "}\n";
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .inScenario("retryscenario")
+                .willReturn(WireMock.serverError().withStatus(502).withBody("Bad Gateway"))
+        .willSetStateTo("CauseSuccess"));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .inScenario("retryscenario")
+                .whenScenarioStateIs("CauseSuccess")
+                .willReturn(WireMock.okJson(jsonBody)));
+
+            var result = beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345");
+
+        assertEquals("12345678901", result.getPersonidentifikator());
+        assertEquals("2016", result.getInntektsaar());
+        assertEquals((Long) 490000L, result.getPersoninntektLoenn().orElse(null));
+        assertEquals((Long) 90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
+        assertEquals((Long) 70000L, result.getPersoninntektNaering().orElse(null));
+        assertEquals((Long) 40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
+        assertEquals((Long) 123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
+        assertEquals((Long) 123456L, result.getSvalbardPersoninntektNaering().orElse(null));
+    }
+
     @Test
     void when_ResponseFailedWithGeneric4xxError_Then_ThrowClientException() {
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))

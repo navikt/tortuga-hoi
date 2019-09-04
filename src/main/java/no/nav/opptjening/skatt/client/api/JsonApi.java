@@ -1,13 +1,15 @@
 package no.nav.opptjening.skatt.client.api;
 
+import no.nav.opptjening.skatt.client.exceptions.BadGateway;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.TimeUnit;
 
-import static no.nav.opptjening.skatt.client.api.HttpLogger.logReceivingResponse;
-import static no.nav.opptjening.skatt.client.api.HttpLogger.logSendingRequest;
+import static no.nav.opptjening.skatt.client.api.HttpLogger.*;
 
 public class JsonApi {
 
@@ -27,7 +29,14 @@ public class JsonApi {
         HttpRequest request = buildRequest(endepunkt);
         try {
             var response = fetch(request);
-            if (response.statusCode() != 200) errorHandler.handleError(response);
+            try{
+                if (response.statusCode() != 200) errorHandler.handleError(response);
+            } catch (BadGateway ex){
+                logBadGateway();
+                TimeUnit.SECONDS.sleep(1);
+                response =  fetch(request);
+                if (response.statusCode() != 200) errorHandler.handleError(response);
+            }
             return response.body();
 
         } catch (IOException | InterruptedException e) {

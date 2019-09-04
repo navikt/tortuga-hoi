@@ -1,6 +1,7 @@
 package no.nav.opptjening.skatt.client.api;
 
 import no.nav.opptjening.skatt.client.api.beregnetskatt.FantIkkeBeregnetSkattException;
+import no.nav.opptjening.skatt.client.exceptions.BadGateway;
 import no.nav.opptjening.skatt.client.exceptions.BadRequestException;
 import no.nav.opptjening.skatt.client.exceptions.ClientException;
 import no.nav.opptjening.skatt.client.exceptions.ServerException;
@@ -35,6 +36,7 @@ class HttpErrorHandler {
 
     private void handleSpecificStatusCodes(HttpResponse<String> response) {
         if (response.statusCode() == 400) throw new BadRequestException(response.body());
+        else if (response.statusCode() == 502) throw new BadGateway(response.body());
     }
 
     private void handleSpecialCaseByApiErrorCode(HttpResponse<String> response) {
