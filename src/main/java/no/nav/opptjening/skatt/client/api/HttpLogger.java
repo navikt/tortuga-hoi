@@ -22,8 +22,8 @@ class HttpLogger {
         debugIfEnabbled(()->String.format("%s %s\n%s", request.method(), request.uri(), headersAsString(request.headers())));
     }
 
-    static void logBadGateway() {
-        LOG.warn("Received bad gateway, assuming temporary hiccup and try again");
+    static void logBadGateway(int attempts) {
+        LOG.warn("Received 502 Bad Gateway, assuming temporary hiccup and trying again. Attempts:{}", attempts);
     }
 
     static void debugIfEnabbled(Supplier<String> logMessage){

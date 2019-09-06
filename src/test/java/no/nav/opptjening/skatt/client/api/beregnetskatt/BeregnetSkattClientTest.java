@@ -1,19 +1,22 @@
 package no.nav.opptjening.skatt.client.api.beregnetskatt;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.JsonApi;
 import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.exceptions.BadRequestException;
 import no.nav.opptjening.skatt.client.exceptions.ClientException;
 import no.nav.opptjening.skatt.client.exceptions.ServerException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 
 class BeregnetSkattClientTest {
 
@@ -24,7 +27,7 @@ class BeregnetSkattClientTest {
     @BeforeEach
     void setUp() {
         wireMockRule.start();
-        JsonApi jsonApi = JsonApiBuilder.createJsonApi(()->"my-api-key");
+        JsonApi jsonApi = JsonApiBuilder.createJsonApi(() -> "my-api-key");
         this.beregnetSkattClient = new BeregnetSkattClient(null, "http://localhost:" + wireMockRule.port() + "/", jsonApi);
     }
 
@@ -50,7 +53,7 @@ class BeregnetSkattClientTest {
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
                 .willReturn(WireMock.okJson(jsonBody)));
 
-        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345678901");
+        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345678901");
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
@@ -74,7 +77,7 @@ class BeregnetSkattClientTest {
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
                 .willReturn(WireMock.okJson(jsonBody)));
 
-        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345678901");
+        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345678901");
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
@@ -128,7 +131,7 @@ class BeregnetSkattClientTest {
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
                 .willReturn(WireMock.okJson(jsonBody)));
 
-        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345678901");
+        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345678901");
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
@@ -144,16 +147,16 @@ class BeregnetSkattClientTest {
     void when_ResponseFailedWithFeilmelding_Then_ThrowMappedException() {
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
-                .willReturn(WireMock.badRequest().withBody("{\"kode\": \"BSA-005\", \"melding\": \"Det forespurte inntektsåret er ikke støttet\", \"korrelasjonsId\": \"foobar\"}")));
+                .willReturn(
+                        WireMock.badRequest().withBody("{\"kode\": \"BSA-005\", \"melding\": \"Det forespurte inntektsåret er ikke støttet\", \"korrelasjonsId\": \"foobar\"}")));
 
         try {
-            beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345");
+            beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345");
             fail("Expected an BadRequestException to be thrown");
         } catch (BadRequestException e) {
             // ok
         }
     }
-
 
     @Test
     void when_ResponseFailedWithBadGatawayThenRetry() {
@@ -171,7 +174,21 @@ class BeregnetSkattClientTest {
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
                 .inScenario("retryscenario")
                 .willReturn(WireMock.serverError().withStatus(502).withBody("Bad Gateway"))
-        .willSetStateTo("CauseSuccess"));
+                .willSetStateTo("Retry1"));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .inScenario("retryscenario")
+                .willReturn(WireMock.serverError().withStatus(502).withBody("Bad Gateway"))
+                .whenScenarioStateIs("Retry1")
+                .willSetStateTo("Retry2"));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .inScenario("retryscenario")
+                .willReturn(WireMock.serverError().withStatus(502).withBody("Bad Gateway"))
+                .whenScenarioStateIs("Retry2")
+                .willSetStateTo("CauseSuccess"));
 
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345"))
                 .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
@@ -179,7 +196,7 @@ class BeregnetSkattClientTest {
                 .whenScenarioStateIs("CauseSuccess")
                 .willReturn(WireMock.okJson(jsonBody)));
 
-            var result = beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345");
+        var result = beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345");
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
@@ -198,7 +215,7 @@ class BeregnetSkattClientTest {
                 .willReturn(WireMock.badRequest().withBody("bad request")));
 
         try {
-            beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345");
+            beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345");
             fail("Expected an ClientException to be thrown");
         } catch (ClientException e) {
             // ok
@@ -212,7 +229,7 @@ class BeregnetSkattClientTest {
                 .willReturn(WireMock.serverError().withBody("internal server error")));
 
         try {
-            beregnetSkattClient.getBeregnetSkatt("nav","2016", "12345");
+            beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345");
             fail("Expected an ServerException to be thrown");
         } catch (ServerException e) {
             // ok

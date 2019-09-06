@@ -1,6 +1,8 @@
 package no.nav.opptjening.skatt.client.api;
 
-import no.nav.opptjening.skatt.client.exceptions.BadGateway;
+import static no.nav.opptjening.skatt.client.api.HttpLogger.logBadGateway;
+import static no.nav.opptjening.skatt.client.api.HttpLogger.logReceivingResponse;
+import static no.nav.opptjening.skatt.client.api.HttpLogger.logSendingRequest;
 
 import java.io.IOException;
 import java.net.URI;
@@ -9,7 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.TimeUnit;
 
-import static no.nav.opptjening.skatt.client.api.HttpLogger.*;
+import no.nav.opptjening.skatt.client.exceptions.BadGateway;
 
 public class JsonApi {
 
@@ -27,21 +29,26 @@ public class JsonApi {
 
     public String fetch(String endepunkt) {
         HttpRequest request = buildRequest(endepunkt);
+        HttpResponse<String> response;
         try {
-            var response = fetch(request);
-            try{
-                if (response.statusCode() != 200) errorHandler.handleError(response);
-            } catch (BadGateway ex){
-                logBadGateway();
-                TimeUnit.SECONDS.sleep(1);
-                response =  fetch(request);
-                if (response.statusCode() != 200) errorHandler.handleError(response);
-            }
-            return response.body();
-
+            int MAX_ATTEMPTS = 4;
+            int attempts = 1;
+            do {
+                response = fetch(request);
+                try {
+                    if (response.statusCode() != 200) {
+                        errorHandler.handleError(response);
+                    }
+                } catch (BadGateway ex) {
+                    logBadGateway(attempts);
+                    TimeUnit.MILLISECONDS.sleep(attempts * 200 * 2);
+                    attempts++;
+                }
+            } while (response.statusCode() != 200 && attempts <= MAX_ATTEMPTS);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return response.body();
     }
 
     public <T> T fetchObject(String endepunkt, Class<T> expectedType) {
