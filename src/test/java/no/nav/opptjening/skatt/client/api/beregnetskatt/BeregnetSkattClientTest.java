@@ -1,22 +1,20 @@
 package no.nav.opptjening.skatt.client.api.beregnetskatt;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 import no.nav.opptjening.skatt.client.BeregnetSkatt;
 import no.nav.opptjening.skatt.client.api.JsonApi;
 import no.nav.opptjening.skatt.client.api.JsonApiBuilder;
 import no.nav.opptjening.skatt.client.exceptions.BadRequestException;
 import no.nav.opptjening.skatt.client.exceptions.ClientException;
 import no.nav.opptjening.skatt.client.exceptions.ServerException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class BeregnetSkattClientTest {
 
@@ -27,8 +25,11 @@ class BeregnetSkattClientTest {
     @BeforeEach
     void setUp() {
         wireMockRule.start();
-        JsonApi jsonApi = JsonApiBuilder.createJsonApi(() -> "my-api-key");
-        this.beregnetSkattClient = new BeregnetSkattClient(null, "http://localhost:" + wireMockRule.port() + "/", jsonApi);
+        JsonApi jsonApiSkatt = JsonApiBuilder.createJsonApi(() -> "my-api-key");
+        JsonApi jsonApiSvalbard = JsonApiBuilder.createJsonApi(() -> "my-api-key");
+
+        SvalbardApi svalbardApi = new SvalbardApi("http://localhost:" + wireMockRule.port() + "/", jsonApiSvalbard);
+        this.beregnetSkattClient = new BeregnetSkattClient(svalbardApi, "http://localhost:" + wireMockRule.port() + "/", jsonApiSkatt);
     }
 
     @AfterEach
@@ -235,4 +236,146 @@ class BeregnetSkattClientTest {
             // ok
         }
     }
+
+
+    @Test
+    void when_InntektsaarIs2018_Then_CallSvalbardApi() {
+        Long svalbardBelop = 1000L;
+        String svalbardApiResponse = getSvalbardApiResponse(svalbardBelop);
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .willReturn(WireMock.okJson(getSkattResponse())));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/2018/12345"))
+                .willReturn(WireMock.okJson(svalbardApiResponse)));
+
+        var result = beregnetSkattClient.getBeregnetSkatt("nav", "2018", "12345");
+
+        assertTrue(result.getSvalbardLoennLoennstrekkordningen().isPresent());
+        assertEquals(svalbardBelop, result.getSvalbardLoennLoennstrekkordningen().get());
+    }
+
+    @Test
+    void when_ResponseFromBeregnetSkattFailedWithClientExceptionAndKodeBSA006_Then_ReturnBeregnetSkattWithSvalbardInntektInntektsaarAndPersonidentifikator() {
+        Long svalbardBelop = 1000L;
+        String inntekstsaar = "2018";
+        String personidentifikator = "12345";
+
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.notFound().withBody(getBSA006ErrorMessage())));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/2018/12345"))
+                .willReturn(WireMock.okJson(getSvalbardApiResponse(svalbardBelop))));
+
+        var result = beregnetSkattClient.getBeregnetSkatt("nav", inntekstsaar, personidentifikator);
+
+        assertTrue(result.getSvalbardLoennLoennstrekkordningen().isPresent());
+        assertEquals(svalbardBelop, result.getSvalbardLoennLoennstrekkordningen().get());
+        assertEquals(inntekstsaar, result.getInntektsaar());
+        assertEquals(personidentifikator, result.getPersonidentifikator());
+    }
+
+    @Test
+    void when_ResponseFromBeregnetSkattFailedWithClientExceptionANdNotKodeBSA006_Then_RethrowException() {
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.notFound().withBody("some error")));
+
+        assertThrows(ClientException.class, () -> beregnetSkattClient.getBeregnetSkatt("nav", "2018", "12345"));
+    }
+
+    @Test
+    void when_ResponseFromBeregnetSkattFailedWithClientExceptionAndKodeBSA006AndsvalbardApiFailsWithException_Then_RethrowExceptionFromBeregnetSkatt() {
+        String beregnetSkattErrorMessage = getBSA006ErrorMessage();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.notFound().withBody(getBSA006ErrorMessage())));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/2018/12345"))
+                .willReturn(WireMock.notFound().withBody("Det finnes ikke skattegrunnlag for gitt personidentifikator og år")));
+
+        Throwable exception = assertThrows(ClientException.class, () -> beregnetSkattClient.getBeregnetSkatt("nav", "2018", "12345"));
+
+        assertEquals(getkodeFromMessage(beregnetSkattErrorMessage), getkodeFromMessage(exception.getMessage()));
+    }
+
+    @Test
+    void when_ResponseFromBeregnetSkattFailedWithClientExceptionAndKodeBSA006AndNoSvalbardLoennIsFound_Then_RethrowException() {
+        String responseWithoutSvalbardLoenn = "{ \"skjermet\": false}";
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.notFound().withBody(getBSA006ErrorMessage())));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/2018/12345"))
+                .willReturn(WireMock.okJson(responseWithoutSvalbardLoenn)));
+
+        assertThrows(ClientException.class, () -> beregnetSkattClient.getBeregnetSkatt("nav", "2018", "12345"));
+    }
+
+    @Test
+    void when_ResponseFromBeregnetSkattFailedWithClientExceptionKodeBSA006AndNoSkjermetIsFOund_Then_RethrowException() {
+        String responseWithoutSkjermet = "{\n" +
+                "\t\"svalbardGrunnlag\": [\n" +
+                "\t\t{\n" +
+                "\t\t\t\"tekniskNavn\": \"loennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen\",\n" +
+                "\t\t\t\"beloep\":1000\n" +
+                "\t\t}\n" +
+                "\t]\n" +
+                "}";
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.notFound().withBody(getBSA006ErrorMessage())));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/2018/12345"))
+                .willReturn(WireMock.okJson(responseWithoutSkjermet)));
+
+        assertThrows(ClientException.class, () -> beregnetSkattClient.getBeregnetSkatt("nav", "2018", "12345"));
+    }
+
+    private String getSkattResponse() {
+        return "{\n" +
+                "    \"personidentifikator\": \"12345678901\",\n" +
+                "    \"inntektsaar\": \"2016\",\n" +
+                "    \"personinntektLoenn\": 490000,\n" +
+                "    \"personinntektFiskeFangstFamiliebarnehage\": 90000,\n" +
+                "    \"personinntektNaering\": 70000,\n" +
+                "    \"personinntektBarePensjonsdel\": 40000,\n" +
+                "    \"svalbardLoennLoennstrekkordningen\": 123456,\n" +
+                "    \"svalbardPersoninntektNaering\": 123456\n" +
+                "}\n";
+    }
+
+    private String getSvalbardApiResponse(Long belop) {
+        return "{\n" +
+                "\"personidentifikator\": \"12345678910\",\n" +
+                "\"inntektsaar\": \"2018\",\n" +
+                "\"skjermet\": false,\n" +
+                "\t\"svalbardGrunnlag\": [\n" +
+                "\t\t{\n" +
+                "\t\t\t\"tekniskNavn\": \"loennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen\",\n" +
+                "\t\t\t\"beloep\":" + belop + "\n" +
+                "\t\t}\n" +
+                "\t]\n" +
+                "}";
+    }
+
+    private String getBSA006ErrorMessage() {
+        return "{\n" +
+                " \"kode\": \"BSA-006\",\n" +
+                " \"melding\": \"Fant ikke Beregnet Skatt for gitt inntektsår og identifikator\",\n" +
+                " \"korrelasjonsid\": \"13a865f5-28f9-47db-9abd-ab78977c79fe\"\n" +
+                "}";
+    }
+
+    private String getkodeFromMessage(String message) {
+        var configuration = Configuration.builder().build();
+        var documentContext = JsonPath.using(configuration).parse(message);
+        return documentContext.read("$.kode");
+    }
+
 }

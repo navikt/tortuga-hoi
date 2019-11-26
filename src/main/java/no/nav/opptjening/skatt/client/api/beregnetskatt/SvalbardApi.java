@@ -1,10 +1,9 @@
 package no.nav.opptjening.skatt.client.api.beregnetskatt;
 
+import no.nav.opptjening.skatt.client.SvalbardLoennsInntekt;
 import no.nav.opptjening.skatt.client.api.JsonApi;
 
-import java.util.Optional;
-
-import static no.nav.opptjening.skatt.client.api.SvalbardLonnExtractor.finnLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen;
+import static no.nav.opptjening.skatt.client.api.SvalbardLonnExtractor.fetchLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen;
 
 public class SvalbardApi {
     private final String endepunkt;
@@ -15,8 +14,9 @@ public class SvalbardApi {
         this.jsonApi = jsonApi;
     }
 
-    Optional<Long> fetchSvalbardLoennsInntekt(String inntektsaar, String personidentifikator) {
+    SvalbardLoennsInntekt fetchSvalbardLoennsInntekt(String inntektsaar, String personidentifikator) {
         //api-gw legger for summertskattegrunnlag på "rettigspakke" selv
-        return finnLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(jsonApi.fetch(String.format("%s%s/%s", endepunkt, inntektsaar, personidentifikator)));
+        return fetchLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(jsonApi.fetch(String.format("%s%s/%s", endepunkt, inntektsaar, personidentifikator)));
     }
+
 }

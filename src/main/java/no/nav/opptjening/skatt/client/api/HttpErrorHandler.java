@@ -42,7 +42,7 @@ class HttpErrorHandler {
     private void handleSpecialCaseByApiErrorCode(HttpResponse<String> response) {
         try {
             var feil = jsonDeserializer.toObject(response.body(), FeilmeldingDto.class);
-            if (feil != null && "BSA-006".equals(feil.getKode())) throw new FantIkkeBeregnetSkattException("");
+            if (feil != null && "BSA-006".equals(feil.getKode())) throw new FantIkkeBeregnetSkattException(response.body());
         } catch (ResponseUnmappableException ignored) {
 
         }

@@ -32,6 +32,18 @@ public final class BeregnetSkatt {
         this.skjermet = skjermet;
     }
 
+    public BeregnetSkatt(String personidentifikator, String inntektsaar, Long svalbardLoennLoennstrekkordningen, boolean skjermet) {
+        this.personidentifikator = personidentifikator;
+        this.inntektsaar = inntektsaar;
+        this.personinntektLoenn = null;
+        this.personinntektFiskeFangstFamiliebarnehage = null;
+        this.personinntektNaering = null;
+        this.personinntektBarePensjonsdel = null;
+        this.svalbardLoennLoennstrekkordningen = svalbardLoennLoennstrekkordningen;
+        this.svalbardPersoninntektNaering = null;
+        this.skjermet = skjermet;
+    }
+
     public String getPersonidentifikator() {
         return personidentifikator;
     }
