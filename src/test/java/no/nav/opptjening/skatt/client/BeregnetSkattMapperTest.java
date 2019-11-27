@@ -23,7 +23,8 @@ class BeregnetSkattMapperTest {
         assertEquals((Long) 4L, beregnetSkatt.getPersoninntektBarePensjonsdel().orElse(null));
         assertEquals((Long) 5L, beregnetSkatt.getSvalbardLoennLoennstrekkordningen().orElse(null));
         assertEquals((Long) 6L, beregnetSkatt.getSvalbardPersoninntektNaering().orElse(null));
-        assertFalse(beregnetSkatt.isSkjermet());
+        assertTrue(beregnetSkatt.isSkjermet().isPresent());
+        assertFalse(beregnetSkatt.isSkjermet().get());
     }
 
     @Test
@@ -39,18 +40,19 @@ class BeregnetSkattMapperTest {
         assertEquals((Long) 4L, beregnetSkatt.getPersoninntektBarePensjonsdel().orElse(null));
         assertNull(beregnetSkatt.getSvalbardLoennLoennstrekkordningen().orElse(null));
         assertNull(beregnetSkatt.getSvalbardPersoninntektNaering().orElse(null));
-        assertFalse(beregnetSkatt.isSkjermet());
+        assertTrue(beregnetSkatt.isSkjermet().isPresent());
+        assertFalse(beregnetSkatt.isSkjermet().get());
     }
 
     @Test
     void that_NPE_When_personidentifikator_Is_Null() {
         BeregnetSkattDto beregnetSkattDto = new BeregnetSkattDto(null, "2018", 1L, 2L, 3L, 4L, 5L, 6L, false);
-        Assertions.assertThrows(NullPointerException.class, ()->beregnetSkattMapper.mapToBeregnetSkatt(beregnetSkattDto));
+        Assertions.assertThrows(NullPointerException.class, () -> beregnetSkattMapper.mapToBeregnetSkatt(beregnetSkattDto));
     }
 
     @Test
     void that_NPE_When_inntektsaar_Is_Null() {
         BeregnetSkattDto beregnetSkattDto = new BeregnetSkattDto("123456", null, 1L, 2L, 3L, 4L, 5L, 6L, false);
-        Assertions.assertThrows(NullPointerException.class, ()->beregnetSkattMapper.mapToBeregnetSkatt(beregnetSkattDto));
+        Assertions.assertThrows(NullPointerException.class, () -> beregnetSkattMapper.mapToBeregnetSkatt(beregnetSkattDto));
     }
 }

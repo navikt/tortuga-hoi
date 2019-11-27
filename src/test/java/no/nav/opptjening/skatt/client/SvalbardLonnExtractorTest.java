@@ -2,23 +2,20 @@ package no.nav.opptjening.skatt.client;
 
 import org.junit.jupiter.api.Test;
 
-
-import static no.nav.opptjening.skatt.client.api.SvalbardLonnExtractor.finnLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen;
+import static no.nav.opptjening.skatt.client.api.SvalbardLonnExtractor.fetchLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SvalbardLonnExtractorTest {
 
     @Test
-    void jsonPathFinnerSvalbardInntekten(){
-        var belop = finnLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(jsonBody());
+    void jsonPathFinnerSvalbardInntekten() {
+        var belop = fetchLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(jsonBody());
         assertTrue(belop.isPresent());
         assertEquals(123456L, belop.get());
     }
 
-
-
-    String jsonBody(){
+    String jsonBody() {
         return "{\n" +
                 "  \"personidentifikator\": \"12345678910\",\n" +
                 "  \"inntektsaar\": \"2017\",\n" +
