@@ -14,7 +14,7 @@ class PensjonsgivendeInntektMapperTest {
     void toPensjonsgivendeInntektOk() {
         BeregnetSkatt beregnetSkatt = new BeregnetSkatt("12345678911", "2018", 5678L,
                 7890L, 8901L, 9012L,
-                89012L, 123456L, false);
+                89012L, 123456L, null);
 
         PensjonsgivendeInntekt pensjonsgivendeInntekt = new PensjonsgivendeInntektMapper().apply(HendelseKey.newBuilder()
                 .setGjelderPeriode(beregnetSkatt.getInntektsaar())

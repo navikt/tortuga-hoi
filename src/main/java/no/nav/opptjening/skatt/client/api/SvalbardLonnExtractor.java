@@ -14,7 +14,7 @@ public class SvalbardLonnExtractor {
     private SvalbardLonnExtractor() {
     }
 
-    public static Optional<Long> finnLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(String jsonDocument) {
+    public static Optional<Long> fetchLoennsinntektMedTrygdeavgiftspliktOmfattetAvLoennstrekkordningen(String jsonDocument) {
         var configuration = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS).build();
         var documentContext = JsonPath.using(configuration).parse(jsonDocument);
         List<Integer> beloep = documentContext.read(JSONPATH_SVALBARDLONN);

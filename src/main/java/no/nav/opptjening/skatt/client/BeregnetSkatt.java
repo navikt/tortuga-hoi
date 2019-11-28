@@ -14,13 +14,13 @@ public final class BeregnetSkatt {
     private final Long personinntektBarePensjonsdel;
     private final Long svalbardLoennLoennstrekkordningen;
     private final Long svalbardPersoninntektNaering;
-    private final boolean skjermet;
+    private final Boolean skjermet;
 
     public BeregnetSkatt(String personidentifikator, String inntektsaar,
                          Long personinntektLoenn, Long personinntektFiskeFangstFamiliebarnehage,
                          Long personinntektNaering, Long personinntektBarePensjonsdel,
                          Long svalbardLoennLoennstrekkordningen, Long svalbardPersoninntektNaering,
-                         boolean skjermet) {
+                         Boolean skjermet) {
         this.personidentifikator = personidentifikator;
         this.inntektsaar = inntektsaar;
         this.personinntektLoenn = personinntektLoenn;
@@ -30,6 +30,18 @@ public final class BeregnetSkatt {
         this.svalbardLoennLoennstrekkordningen = svalbardLoennLoennstrekkordningen;
         this.svalbardPersoninntektNaering = svalbardPersoninntektNaering;
         this.skjermet = skjermet;
+    }
+
+    public BeregnetSkatt(String personidentifikator, String inntektsaar, Long svalbardLoennLoennstrekkordningen) {
+        this.personidentifikator = personidentifikator;
+        this.inntektsaar = inntektsaar;
+        this.personinntektLoenn = null;
+        this.personinntektFiskeFangstFamiliebarnehage = null;
+        this.personinntektNaering = null;
+        this.personinntektBarePensjonsdel = null;
+        this.svalbardLoennLoennstrekkordningen = svalbardLoennLoennstrekkordningen;
+        this.svalbardPersoninntektNaering = null;
+        this.skjermet = null;
     }
 
     public String getPersonidentifikator() {
@@ -64,8 +76,8 @@ public final class BeregnetSkatt {
         return Optional.ofNullable(svalbardPersoninntektNaering);
     }
 
-    public boolean isSkjermet() {
-        return skjermet;
+    public Optional<Boolean> isSkjermet() {
+        return Optional.ofNullable(skjermet);
     }
 
     @Override
@@ -73,7 +85,7 @@ public final class BeregnetSkatt {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BeregnetSkatt that = (BeregnetSkatt) o;
-        return skjermet == that.skjermet &&
+        return Objects.equals(skjermet, that.skjermet) &&
                 Objects.equals(personidentifikator, that.personidentifikator) &&
                 Objects.equals(inntektsaar, that.inntektsaar) &&
                 Objects.equals(personinntektLoenn, that.personinntektLoenn) &&
@@ -114,7 +126,7 @@ public final class BeregnetSkatt {
                 this.getPersoninntektBarePensjonsdel().orElse(null),
                 svalbardLoenn,
                 this.getSvalbardPersoninntektNaering().orElse(null),
-                this.isSkjermet()
+                this.isSkjermet().orElse(null)
         );
     }
 }
