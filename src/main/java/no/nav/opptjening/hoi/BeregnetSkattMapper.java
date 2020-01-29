@@ -29,7 +29,7 @@ class BeregnetSkattMapper implements ValueMapperWithKey<HendelseKey, Hendelse, B
 
     @Override
     public BeregnetSkatt apply(HendelseKey key, Hendelse hendelse) {
-        LOG.trace("HOI haandterer hendelse={}", hendelse);
+        LOG.info("HOI haandterer hendelse={}", hendelse);
         inntektsHendelserProcessedTotal.inc();
         inntektsHendelserProcessed.labels(key.getGjelderPeriode()).inc();
 
