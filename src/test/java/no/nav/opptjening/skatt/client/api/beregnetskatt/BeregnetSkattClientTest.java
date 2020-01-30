@@ -285,6 +285,15 @@ class BeregnetSkattClientTest {
     }
 
     @Test
+    void when_ResponseFromBeregnetSkattFailedsWithClientCodeBSA005_Then_InntektsarIkkeStottetExceptionShouldBeThrown() {
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2018/12345"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.badRequest().withBody(getBSA005ErrorMessage())));
+
+        assertThrows(InntektsarIkkeStottetException.class, () -> beregnetSkattClient.getBeregnetSkatt("nav", "2018", "12345"));
+    }
+
+    @Test
     void when_ResponseFromBeregnetSkattFailedWithClientExceptionAndCodeBSA006AndsvalbardApiFailsWithException_Then_RethrowExceptionFromBeregnetSkatt() {
         String beregnetSkattErrorMessage = getBSA006ErrorMessage();
 
@@ -345,6 +354,14 @@ class BeregnetSkattClientTest {
         return "{\n" +
                 " \"kode\": \"BSA-006\",\n" +
                 " \"melding\": \"Fant ikke Beregnet Skatt for gitt inntektsår og identifikator\",\n" +
+                " \"korrelasjonsid\": \"13a865f5-28f9-47db-9abd-ab78977c79fe\"\n" +
+                "}";
+    }
+
+    private String getBSA005ErrorMessage() {
+        return "{\n" +
+                " \"kode\": \"BSA-005\",\n" +
+                " \"melding\": \"Det forespurte inntektsåret er ikke støttet\",\n" +
                 " \"korrelasjonsid\": \"13a865f5-28f9-47db-9abd-ab78977c79fe\"\n" +
                 "}";
     }

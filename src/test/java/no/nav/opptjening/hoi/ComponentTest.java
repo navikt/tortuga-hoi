@@ -3,15 +3,16 @@ package no.nav.opptjening.hoi;
 import no.nav.opptjening.schema.skatt.hendelsesliste.Hendelse;
 import no.nav.opptjening.skatt.client.api.beregnetskatt.BeregnetSkattClient;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static no.nav.opptjening.hoi.KafkaConfiguration.PENSJONSGIVENDE_INNTEKT_TOPIC;
 import static no.nav.opptjening.hoi.KafkaTestEnvironment.*;
-import static no.nav.opptjening.hoi.MockApi.port;
-import static no.nav.opptjening.hoi.MockApi.setUpBeregnetSkattStubs;
+import static no.nav.opptjening.hoi.MockApi.*;
 import static no.nav.opptjening.skatt.client.api.JsonApiBuilder.createJsonApi;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,7 +46,8 @@ class ComponentTest {
                 new Hendelse(1L, "01029804032", "2017"),
                 new Hendelse(7L, "12412512533", INVALID_HENDELSE_YEAR),
                 new Hendelse(50L, "12412513568", INVALID_HENDELSE_YEAR),
-                new Hendelse(133L, "11987654321", "2018")
+                new Hendelse(133L, FNR_FANT_IKKE_BEREGNET_SKATT, "2018"),
+                new Hendelse(140L, FNR_FORESPURT_INNTEKTSAAR_IKKE_STOTTET, "2019")
         );
         populateHendelseTopic(hendelser);
 
@@ -57,6 +59,7 @@ class ComponentTest {
         assertEquals(consumerRecordKeys.get(0).getIdentifikator(), hendelser.get(0).getIdentifikator());
         assertNotNull(consumerRecordValues.get(0));
         assertEquals(consumerRecordKeys.get(1).getIdentifikator(), hendelser.get(3).getIdentifikator());
+        assertEquals(consumerRecordKeys.get(2).getIdentifikator(), hendelser.get(4).getIdentifikator());
         assertNull(consumerRecordValues.get(1));
     }
 
