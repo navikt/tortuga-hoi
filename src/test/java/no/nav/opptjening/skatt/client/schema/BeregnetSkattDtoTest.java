@@ -26,6 +26,8 @@ class BeregnetSkattDtoTest {
         assertNull(beregnetSkatt.getPersoninntektBarePensjonsdel().orElse(null));
         assertNull(beregnetSkatt.getSvalbardLoennLoennstrekkordningen().orElse(null));
         assertNull(beregnetSkatt.getSvalbardPersoninntektNaering().orElse(null));
+        assertNull(beregnetSkatt.getKildeskattPaaLoennPersoninntektLoenn().orElse(null));
+        assertNull(beregnetSkatt.getKildeskattPaaLoennPersoninntektBarePensjonsdel().orElse(null));
     }
 
     @Test
@@ -40,6 +42,8 @@ class BeregnetSkattDtoTest {
                 "    \"personinntektBarePensjonsdel\": 40000,\n" +
                 "    \"svalbardLoennLoennstrekkordningen\": 123456,\n" +
                 "    \"svalbardPersoninntektNaering\": 654321," +
+                "    \"kildeskattPaaLoennPersoninntektLoenn\": 10000," +
+                "    \"kildeskattPaaLoennPersoninntektBarePensjonsdel\": 10000," +
                 "    \"skjermet\": false\n" +
                 "}\n";
 
@@ -52,6 +56,8 @@ class BeregnetSkattDtoTest {
         assertEquals((Long) 40000L, beregnetSkatt.getPersoninntektBarePensjonsdel().orElse(null));
         assertEquals((Long) 123456L, beregnetSkatt.getSvalbardLoennLoennstrekkordningen().orElse(null));
         assertEquals((Long) 654321L, beregnetSkatt.getSvalbardPersoninntektNaering().orElse(null));
+        assertEquals((Long) 10000L, beregnetSkatt.getKildeskattPaaLoennPersoninntektLoenn().orElse(null));
+        assertEquals((Long) 10000L, beregnetSkatt.getKildeskattPaaLoennPersoninntektBarePensjonsdel().orElse(null));
     }
 
     @Test
@@ -74,5 +80,7 @@ class BeregnetSkattDtoTest {
         assertNull(beregnetSkatt.getPersoninntektBarePensjonsdel().orElse(null));
         assertNull(beregnetSkatt.getSvalbardLoennLoennstrekkordningen().orElse(null));
         assertNull(beregnetSkatt.getSvalbardPersoninntektNaering().orElse(null));
+        assertNull(beregnetSkatt.getKildeskattPaaLoennPersoninntektLoenn().orElse(null));
+        assertNull(beregnetSkatt.getKildeskattPaaLoennPersoninntektBarePensjonsdel().orElse(null));
     }
 }
