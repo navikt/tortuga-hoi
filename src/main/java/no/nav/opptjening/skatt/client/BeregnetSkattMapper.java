@@ -14,12 +14,27 @@ public class BeregnetSkattMapper {
             throw new NullPointerException("Inntektsaar is null");
         }
         return new BeregnetSkatt(personidentifikator, inntektsaar,
-                beregnetSkattDto.getPersoninntektLoenn().orElse(null),
+                calculatePersoninntektLoenn(beregnetSkattDto),
                 beregnetSkattDto.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null),
                 beregnetSkattDto.getPersoninntektNaering().orElse(null),
                 beregnetSkattDto.getPersoninntektBarePensjonsdel().orElse(null),
                 beregnetSkattDto.getSvalbardLoennLoennstrekkordningen().orElse(null),
                 beregnetSkattDto.getSvalbardPersoninntektNaering().orElse(null),
                 beregnetSkattDto.isSkjermet());
+    }
+
+    private Long calculatePersoninntektLoenn(BeregnetSkattDto beregnetSkattDto) {
+        Long personinntektLoenn = beregnetSkattDto.getPersoninntektLoenn().orElse(null);
+        Long kildeskattPaaLoennPersoninntektLoenn = beregnetSkattDto.getKildeskattPaaLoennPersoninntektLoenn().orElse(null);
+        Long kildeskattPaaLoennPersoninntektBarePensjonsdel = beregnetSkattDto.getKildeskattPaaLoennPersoninntektBarePensjonsdel().orElse(null);
+        Long totalKildeskatt = sumNullable(kildeskattPaaLoennPersoninntektLoenn, kildeskattPaaLoennPersoninntektBarePensjonsdel);
+        return sumNullable(personinntektLoenn, totalKildeskatt);
+    }
+
+    private Long sumNullable(Long a, Long b) {
+        if (a != null) {
+            if (b != null) return a + b;
+            else return a;
+        } else return b;
     }
 }

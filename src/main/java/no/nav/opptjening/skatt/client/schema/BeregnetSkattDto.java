@@ -15,12 +15,15 @@ public final class BeregnetSkattDto {
     private final Long personinntektBarePensjonsdel;
     private final Long svalbardLoennLoennstrekkordningen;
     private final Long svalbardPersoninntektNaering;
+    private final Long kildeskattPaaLoennPersoninntektLoenn;
+    private final Long kildeskattPaaLoennPersoninntektBarePensjonsdel;
     private final boolean skjermet;
 
     public BeregnetSkattDto(String personidentifikator, String inntektsaar,
                             Long personinntektLoenn, Long personinntektFiskeFangstFamiliebarnehage,
                             Long personinntektNaering, Long personinntektBarePensjonsdel,
                             Long svalbardLoennLoennstrekkordningen, Long svalbardPersoninntektNaering,
+                            Long kildeskattPaaLoennPersoninntektLoenn, Long kildeskattPaaLoennPersoninntektBarePensjonsdel,
                             boolean skjermet) {
         this.personidentifikator = personidentifikator;
         this.inntektsaar = inntektsaar;
@@ -30,6 +33,8 @@ public final class BeregnetSkattDto {
         this.personinntektBarePensjonsdel = personinntektBarePensjonsdel;
         this.svalbardLoennLoennstrekkordningen = svalbardLoennLoennstrekkordningen;
         this.svalbardPersoninntektNaering = svalbardPersoninntektNaering;
+        this.kildeskattPaaLoennPersoninntektLoenn = kildeskattPaaLoennPersoninntektLoenn;
+        this.kildeskattPaaLoennPersoninntektBarePensjonsdel = kildeskattPaaLoennPersoninntektBarePensjonsdel;
         this.skjermet = skjermet;
     }
 
@@ -65,6 +70,14 @@ public final class BeregnetSkattDto {
         return Optional.ofNullable(svalbardPersoninntektNaering);
     }
 
+    public Optional<Long> getKildeskattPaaLoennPersoninntektLoenn() {
+        return Optional.ofNullable(kildeskattPaaLoennPersoninntektLoenn);
+    }
+
+    public Optional<Long> getKildeskattPaaLoennPersoninntektBarePensjonsdel() {
+        return Optional.ofNullable(kildeskattPaaLoennPersoninntektBarePensjonsdel);
+    }
+
     public boolean isSkjermet() {
         return skjermet;
     }
@@ -80,6 +93,8 @@ public final class BeregnetSkattDto {
                 ", personinntektBarePensjonsdel=" + personinntektBarePensjonsdel +
                 ", svalbardLoennLoennstrekkordningen=" + svalbardLoennLoennstrekkordningen +
                 ", svalbardPersoninntektNaering=" + svalbardPersoninntektNaering +
+                ", kildeskattPaaLoennPersoninntektLoenn=" + kildeskattPaaLoennPersoninntektLoenn +
+                ", kildeskattPaaLoennPersoninntektBarePensjonsdel=" + kildeskattPaaLoennPersoninntektBarePensjonsdel +
                 ", skjermet=" + skjermet +
                 '}';
     }
@@ -97,6 +112,8 @@ public final class BeregnetSkattDto {
         private Long personinntektBarePensjonsdel;
         private Long svalbardLoennLoennstrekkordningen;
         private Long svalbardPersoninntektNaering;
+        private Long kildeskattPaaLoennPersoninntektLoenn;
+        private Long kildeskattPaaLoennPersoninntektBarePensjonsdel;
         private boolean skjermet;
 
         private Builder() {
@@ -142,13 +159,23 @@ public final class BeregnetSkattDto {
             return this;
         }
 
+        public Builder withKildeskattPaaLoennPersoninntektLoenn(Long kildeskattPaaLoennPersoninntektLoenn) {
+            this.kildeskattPaaLoennPersoninntektLoenn = kildeskattPaaLoennPersoninntektLoenn;
+            return this;
+        }
+
+        public Builder withKildeskattPaaLoennPersoninntektBarePensjonsdel(Long kildeskattPaaLoennPersoninntektBarePensjonsdel) {
+            this.kildeskattPaaLoennPersoninntektBarePensjonsdel = kildeskattPaaLoennPersoninntektBarePensjonsdel;
+            return this;
+        }
+
         public Builder withSkjermet(boolean skjermet) {
             this.skjermet = skjermet;
             return this;
         }
 
         public BeregnetSkattDto build() {
-            return new BeregnetSkattDto(personidentifikator, inntektsaar, personinntektLoenn, personinntektFiskeFangstFamiliebarnehage, personinntektNaering, personinntektBarePensjonsdel, svalbardLoennLoennstrekkordningen, svalbardPersoninntektNaering, skjermet);
+            return new BeregnetSkattDto(personidentifikator, inntektsaar, personinntektLoenn, personinntektFiskeFangstFamiliebarnehage, personinntektNaering, personinntektBarePensjonsdel, svalbardLoennLoennstrekkordningen, svalbardPersoninntektNaering, kildeskattPaaLoennPersoninntektLoenn, kildeskattPaaLoennPersoninntektBarePensjonsdel, skjermet);
         }
     }
 }
