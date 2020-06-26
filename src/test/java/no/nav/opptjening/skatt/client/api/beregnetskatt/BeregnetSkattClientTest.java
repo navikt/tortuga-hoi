@@ -58,12 +58,12 @@ class BeregnetSkattClientTest {
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
-        assertEquals((Long) 490000L, result.getPersoninntektLoenn().orElse(null));
-        assertEquals((Long) 90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
-        assertEquals((Long) 70000L, result.getPersoninntektNaering().orElse(null));
-        assertEquals((Long) 40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
-        assertEquals((Long) 123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
-        assertEquals((Long) 123456L, result.getSvalbardPersoninntektNaering().orElse(null));
+        assertEquals(490000L, result.getPersoninntektLoenn().orElse(null));
+        assertEquals(90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
+        assertEquals(70000L, result.getPersoninntektNaering().orElse(null));
+        assertEquals(40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
+        assertEquals(123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
+        assertEquals(123456L, result.getSvalbardPersoninntektNaering().orElse(null));
     }
 
     @Test
@@ -82,7 +82,7 @@ class BeregnetSkattClientTest {
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
-        assertEquals((Long) 490000L, result.getPersoninntektLoenn().orElse(null));
+        assertEquals(490000L, result.getPersoninntektLoenn().orElse(null));
         assertNull(result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
         assertNull(result.getPersoninntektNaering().orElse(null));
         assertNull(result.getPersoninntektBarePensjonsdel().orElse(null));
@@ -136,12 +136,62 @@ class BeregnetSkattClientTest {
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
-        assertEquals((Long) 490000L, result.getPersoninntektLoenn().orElse(null));
-        assertEquals((Long) 90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
-        assertEquals((Long) 70000L, result.getPersoninntektNaering().orElse(null));
-        assertEquals((Long) 40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
-        assertEquals((Long) 123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
-        assertEquals((Long) 123456L, result.getSvalbardPersoninntektNaering().orElse(null));
+        assertEquals(490000L, result.getPersoninntektLoenn().orElse(null));
+        assertEquals(90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
+        assertEquals(70000L, result.getPersoninntektNaering().orElse(null));
+        assertEquals(40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
+        assertEquals(123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
+        assertEquals(123456L, result.getSvalbardPersoninntektNaering().orElse(null));
+    }
+
+    @Test
+    void when_ResponseIsOkAndOfkildeskattVariant_Then_CorrectValuesAreMappedOk() {
+        Long kildeskattPaaLoennPersoninntektLoenn = 1000L;
+        Long kildeskattPaaLoennPersoninntektBarePensjonsdel = 1000L;
+        String jsonBody = "{\n" +
+                "  \"personidentifikator\": \"12345678910\",\n" +
+                "  \"inntektsaar\": \"2016\",\n" +
+                "  \"skjermet\": false,\n" +
+                "  \"kildeskattPaaLoennNettoinntekt\": 12345,\n" +
+                "  \"kildeskattPaaLoennNettoformue\": 0,\n" +
+                "  \"kildeskattPaaLoennBetaltSkattOgAvgift\": 11973,\n" +
+                "  \"kildeskattPaaLoennPersoninntektLoenn\": " + kildeskattPaaLoennPersoninntektLoenn + ",\n" +
+                "  \"kildeskattPaaLoennPersoninntektBarePensjonsdel\": " + kildeskattPaaLoennPersoninntektBarePensjonsdel + "\n" +
+                "}";
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345678910"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.okJson(jsonBody)));
+
+        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345678910");
+
+        assertEquals("12345678910", result.getPersonidentifikator());
+        assertEquals("2016", result.getInntektsaar());
+        assertEquals(kildeskattPaaLoennPersoninntektLoenn + kildeskattPaaLoennPersoninntektBarePensjonsdel, result.getPersoninntektLoenn().orElse(null));
+    }
+
+    @Test
+    void should_sum_PersoninntektLoenn_KildeskattPaaLoennPersoninntektLoenn_and_KildeskattPaaLoennPersoninntektBarePensjonsdel_into_personinntektLoenn() {
+        Long personinntektLoenn = 2000L;
+        Long kildeskattPaaLoennPersoninntektLoenn = 1000L;
+        Long kildeskattPaaLoennPersoninntektBarePensjonsdel = 1000L;
+        String jsonBody = "{\n" +
+                "  \"personidentifikator\": \"12345678910\",\n" +
+                "  \"inntektsaar\": \"2016\",\n" +
+                "  \"skjermet\": false,\n" +
+                "  \"personinntektLoenn\": " + personinntektLoenn + ",\n" +
+                "  \"kildeskattPaaLoennPersoninntektLoenn\": " + kildeskattPaaLoennPersoninntektLoenn + ",\n" +
+                "  \"kildeskattPaaLoennPersoninntektBarePensjonsdel\": " + kildeskattPaaLoennPersoninntektBarePensjonsdel + "\n" +
+                "}";
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/nav/2016/12345678910"))
+                .withHeader("X-Nav-Apikey", WireMock.equalTo("my-api-key"))
+                .willReturn(WireMock.okJson(jsonBody)));
+
+        BeregnetSkatt result = beregnetSkattClient.getBeregnetSkatt("nav", "2016", "12345678910");
+
+        Long sumPersoninntektLoenn = personinntektLoenn + kildeskattPaaLoennPersoninntektLoenn + kildeskattPaaLoennPersoninntektBarePensjonsdel;
+        assertEquals(sumPersoninntektLoenn, result.getPersoninntektLoenn().orElse(null));
     }
 
     @Test
@@ -201,12 +251,12 @@ class BeregnetSkattClientTest {
 
         assertEquals("12345678901", result.getPersonidentifikator());
         assertEquals("2016", result.getInntektsaar());
-        assertEquals((Long) 490000L, result.getPersoninntektLoenn().orElse(null));
-        assertEquals((Long) 90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
-        assertEquals((Long) 70000L, result.getPersoninntektNaering().orElse(null));
-        assertEquals((Long) 40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
-        assertEquals((Long) 123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
-        assertEquals((Long) 123456L, result.getSvalbardPersoninntektNaering().orElse(null));
+        assertEquals(490000L, result.getPersoninntektLoenn().orElse(null));
+        assertEquals(90000L, result.getPersoninntektFiskeFangstFamiliebarnehage().orElse(null));
+        assertEquals(70000L, result.getPersoninntektNaering().orElse(null));
+        assertEquals(40000L, result.getPersoninntektBarePensjonsdel().orElse(null));
+        assertEquals(123456L, result.getSvalbardLoennLoennstrekkordningen().orElse(null));
+        assertEquals(123456L, result.getSvalbardPersoninntektNaering().orElse(null));
     }
 
     @Test
